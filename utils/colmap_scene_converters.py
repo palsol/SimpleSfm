@@ -82,8 +82,8 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     info['k2'] = 0
     info['p1'] = 0
     info['p2'] = 0
-    info['c_x'] = camera_colmap.width / 2
-    info['c_y'] = camera_colmap.height / 2
+    # info['c_x'] = camera_colmap.width / 2
+    # info['c_y'] = camera_colmap.height / 2
 
     if camera_colmap.model == 'SIMPLE_RADIAL':
         info['f_x'] = camera_colmap.params[0] / camera_colmap.width
@@ -278,8 +278,8 @@ def write_view_params_file_nerf_like(
         "k2": scene_info['k2'],
         "p1": scene_info['p1'],
         "p2": scene_info['p2'],
-        "cx": scene_info['c_x'],
-        "cy": scene_info['c_y'],
+        "cx": scene_info['c_x'] * scene_info['original_resolution_x'],
+        "cy": scene_info['c_y'] * scene_info['original_resolution_y'],
         "w": scene_info['original_resolution_x'],
         "h": scene_info['original_resolution_y'],
         "frames": frames,
