@@ -7,6 +7,7 @@ from glob import glob
 
 import cv2
 import ffmpeg
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +105,7 @@ class SyncedMultiviewVideoSceneProcesser:
             times_frame_paths[time_id] = os.path.join(self.dataset_frames_path, f'{time_id:09d}')
             os.makedirs(times_frame_paths[time_id], exist_ok=True)
 
-        for video_name, video_data in self.videos_data.items():
+        for video_name, video_data in tqdm(self.videos_data.items()):
             vidcap = cv2.VideoCapture(video_data['video_path'])
             success, image = vidcap.read()
 
