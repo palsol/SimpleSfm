@@ -39,7 +39,7 @@ class VideoStreamer(object):
         if (type(self.cap) == list or not self.cap.isOpened()) and (lastbit == '.mp4'):
             raise IOError('Cannot open movie file')
         elif type(self.cap) != list and self.cap.isOpened() and (lastbit != '.txt'):
-            logger.debug('==> Processing Video Input.')
+            logger.info('==> Processing Video Input.')
             num_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
             self.listing = range(0, num_frames)
 
@@ -54,7 +54,7 @@ class VideoStreamer(object):
             self.video_file = True
             self.max_len = len(self.listing)
         else:
-            logger.debug('==> Processing Image Directory Input.')
+            logger.info('==> Processing Image Directory Input.')
             search = os.path.join(basedir, img_glob)
             self.listing = glob(search)
             self.listing.sort()

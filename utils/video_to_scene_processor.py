@@ -75,7 +75,7 @@ class SyncedMultiviewVideoSceneProcesser:
             video_name = video_path.split('/')[-1].split('.')[0]
 
             if videos_stats[i]['num_frames'] != self.scene_num_frames:
-                logger.debug(f"Video has different frame length {videos_stats[i]['num_frames']}"
+                logger.info(f"Video has different frame length {videos_stats[i]['num_frames']}"
                              f" must be {self.scene_num_frames}, "
                              f"video path: {videos_paths_list[i]}")
 
@@ -95,7 +95,7 @@ class SyncedMultiviewVideoSceneProcesser:
         else:
             self.skip = skip
 
-        logger.debug(f'Every {self.skip} will be skipped')
+        logger.info(f'Every {self.skip} will be skipped')
 
     def run(self):
         times_ids = list(range(self.scene_num_frames))[::self.skip]

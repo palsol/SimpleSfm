@@ -78,9 +78,9 @@ class ColmapBdManager(object):
         self.connection = sqlite3.connect(self.db_path)
         self.cursor = self.connection.cursor()
 
-        logger.debug(f'BD image width {self.width},  height {self.height}.')
-        logger.debug(f'BD camera_type {camera_type}.')
-        logger.debug(f'BD camera_params {self.camera_params}.')
+        logger.info(f'BD image width {self.width},  height {self.height}.')
+        logger.info(f'BD camera_type {camera_type}.')
+        logger.info(f'BD camera_params {self.camera_params}.')
 
     def __del__(self):
         self.close_bd()
@@ -94,7 +94,7 @@ class ColmapBdManager(object):
 
     @staticmethod
     def mapper(db_path, images_folder_path, sparse_path, camera_type=None, camera_params=None):
-        logger.debug('Starts mapper.')
+        logger.info('Starts mapper.')
         start = time.time()
 
         command = ['colmap', 'mapper',
@@ -117,7 +117,7 @@ class ColmapBdManager(object):
                        check=True)
 
         end = time.time()
-        logger.debug(f'Finished'
+        logger.info(f'Finished'
                      f'Time of mapper {float(end - start)}.')
 
     @staticmethod
@@ -127,7 +127,7 @@ class ColmapBdManager(object):
         :return:
         """
 
-        logger.debug('Starts point triangulator.')
+        logger.info('Starts point triangulator.')
         start = time.time()
 
         subprocess.run(['colmap', 'point_triangulator',
@@ -143,13 +143,13 @@ class ColmapBdManager(object):
                        check=True)
 
         end = time.time()
-        logger.debug(f'Finished'
+        logger.info(f'Finished'
                      f'Time of triangulation {float(end - start)}.')
 
     @staticmethod
     def dense(images_folder_path, sparse_path, output_path, size):
 
-        logger.debug('Starts image_undistorter.')
+        logger.info('Starts image_undistorter.')
         start = time.time()
 
         subprocess.run(['colmap',
@@ -166,10 +166,10 @@ class ColmapBdManager(object):
                        check=True)
 
         end = time.time()
-        logger.debug(f'Finished'
+        logger.info(f'Finished'
                      f'Time of image_undistorter {float(end - start)}.')
 
-        logger.debug('Starts patch_match_stereo.')
+        logger.info('Starts patch_match_stereo.')
         start = time.time()
 
         subprocess.run([
@@ -184,13 +184,13 @@ class ColmapBdManager(object):
             check=True)
 
         end = time.time()
-        logger.debug(f'Finished'
+        logger.info(f'Finished'
                      f'Time of patch_match_stereo {float(end - start)}.')
 
     @staticmethod
     def generate_ply(output_path, dense_path):
 
-        logger.debug('Starts stereo_fusion.')
+        logger.info('Starts stereo_fusion.')
         start = time.time()
 
         subprocess.run(['colmap',
@@ -205,7 +205,7 @@ class ColmapBdManager(object):
                        check=True)
 
         end = time.time()
-        logger.debug(f'Finished'
+        logger.info(f'Finished'
                      f'Time of stereo_fusion {float(end - start)}.')
 
     def __create_images_file(self, poses):
@@ -343,7 +343,7 @@ class ColmapBdManager(object):
         :return:
         """
 
-        logger.debug('Starts matches importer.')
+        logger.info('Starts matches importer.')
         start = time.time()
         self.cursor.execute('DELETE FROM matches;')
         self.connection.commit()
@@ -380,7 +380,7 @@ class ColmapBdManager(object):
                        )
 
         end = time.time()
-        logger.debug(f'Finished \n'
+        logger.info(f'Finished \n'
                      f'Elapsed time: {float(end - start)} \n')
 
     def run_mapper(self):

@@ -144,7 +144,7 @@ class Matcher(object):
         if match_pairs_filter is None:
             match_pairs_filter = lambda x: True
 
-        logger.debug('Starts extracting descriptors.')
+        logger.info('Starts extracting descriptors.')
         start = time.time()
         image_bd_index = 1
 
@@ -180,12 +180,12 @@ class Matcher(object):
 
         end = time.time()
 
-        logger.debug(f'Finished \n '
+        logger.info(f'Finished \n '
                      f'Elapsed time: {float(end - start)} \n'
                      f'Num images: {len(processed_frames)} \n'
                      f'Num keypoints: {num_keypoints} \n')
 
-        logger.debug('Starts matching descriptors.')
+        logger.info('Starts matching descriptors.')
         start = time.time()
 
         match_list = np.array(list(itertools.combinations(images_names.keys(), r=2)))
@@ -203,7 +203,7 @@ class Matcher(object):
             num_matched_points += len(value)
 
         end = time.time()
-        logger.debug(f'Finished \n'
+        logger.info(f'Finished \n'
                      f'Elapsed time: {float(end - start)} \n'
                      f'Num matches: {len(match_list)} \n'
                      f'Num matched points: {num_matched_points} \n')
