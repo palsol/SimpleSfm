@@ -98,8 +98,9 @@ class ColmapBdManager(object):
         start = time.time()
 
         command = ['colmap', 'mapper',
-                   '--Mapper.init_min_tri_angle', '16',
-                   '--Mapper.init_min_num_inliers', '100',
+                   '--Mapper.ba_refine_principal_point', '1',
+                   '--Mapper.filter_max_reproj_error', '2',
+                   '--Mapper.min_num_matches', '32',
                    '--Mapper.extract_colors', '1',
                    '--Mapper.max_num_models', '1',
                    '--database_path', db_path,
