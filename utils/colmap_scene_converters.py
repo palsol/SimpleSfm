@@ -84,8 +84,12 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     info['p2'] = 0
     # info['c_x'] = camera_colmap.width / 2
     # info['c_y'] = camera_colmap.height / 2
-
-    if camera_colmap.model == 'SIMPLE_RADIAL':
+    if camera_colmap.model == 'PINHOLE':
+        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
+        info['f_y'] = camera_colmap.params[0] / camera_colmap.height
+        info['c_x'] = camera_colmap.params[1] / camera_colmap.width
+        info['c_y'] = camera_colmap.params[2] / camera_colmap.height
+    elif camera_colmap.model == 'SIMPLE_RADIAL':
         info['f_x'] = camera_colmap.params[0] / camera_colmap.width
         info['f_y'] = camera_colmap.params[0] / camera_colmap.height
         info['c_x'] = camera_colmap.params[1] / camera_colmap.width
