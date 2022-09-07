@@ -3,16 +3,9 @@ import sys
 from collections import OrderedDict
 
 import numpy as np
-import pandas as pd
 import torch
 
-from utils.read_write_colmap_data import qvec2rotmat
-
-pd.set_option('display.max_colwidth', -1)
-
-sys.path.append(os.path.abspath(os.path.join(os.getcwd(), os.pardir)))
-
-from utils import read_write_colmap_data
+from utils.read_write_colmap_data import qvec2rotmat, read_model
 from utils.camera_pinhole import CameraPinhole
 
 
@@ -47,7 +40,7 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     :return:
     """
 
-    cameras_colmap, images_colmap, points3D_colmap = read_write_colmap_data.read_model(path_sparse)
+    cameras_colmap, images_colmap, points3D_colmap = read_model(path_sparse)
     images_colmap = OrderedDict({k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)})
     info = {}
 
