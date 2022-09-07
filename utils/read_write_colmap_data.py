@@ -435,15 +435,15 @@ def read_model(path, ext=""):
     return cameras, images, points3D
 
 
-def write_model(cameras, images, points3D, path, ext=".bin"):
+def write_model(cameras, images, points3D, path, ext="bin"):
     if ext == ".txt":
-        write_cameras_text(cameras, os.path.join(path, "cameras" + ext))
-        write_images_text(images, os.path.join(path, "images" + ext))
-        write_points3D_text(points3D, os.path.join(path, "points3D") + ext)
+        write_cameras_text(cameras, os.path.join(path, "cameras." + ext))
+        write_images_text(images, os.path.join(path, "images." + ext))
+        write_points3D_text(points3D, os.path.join(path, "points3D.") + ext)
     else:
-        write_cameras_binary(cameras, os.path.join(path, "cameras" + ext))
-        write_images_binary(images, os.path.join(path, "images" + ext))
-        write_points3d_binary(points3D, os.path.join(path, "points3D") + ext)
+        write_cameras_binary(cameras, os.path.join(path, "cameras." + ext))
+        write_images_binary(images, os.path.join(path, "images." + ext))
+        write_points3d_binary(points3D, os.path.join(path, "points3D.") + ext)
     return cameras, images, points3D
 
 
