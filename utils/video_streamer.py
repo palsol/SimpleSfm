@@ -44,7 +44,7 @@ class VideoStreamer(object):
             self.listing = range(0, num_frames)
 
             if skip is None:
-                if self.max_len < num_frames:
+                if self.max_len is not None and self.max_len < num_frames:
                     self.skip = math.ceil(num_frames / self.max_len)
                 else:
                     self.skip = 1
@@ -61,7 +61,7 @@ class VideoStreamer(object):
             num_frames = len(self.listing)
 
             if skip is None:
-                if self.max_len < num_frames:
+                if self.max_len is not self.max_len < num_frames:
                     self.skip = math.ceil(num_frames / self.max_len)
                 else:
                     self.skip = 1
