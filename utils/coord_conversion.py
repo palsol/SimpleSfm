@@ -233,3 +233,5 @@ def get_cameras_world_positions(extrinsics: torch.Tensor) -> torch.Tensor:
 
     x = torch.zeros(extrinsics.shape[0], 1, 3, device=extrinsics.device)
     return coords_cam_to_world(x, extrinsics)
+
+
