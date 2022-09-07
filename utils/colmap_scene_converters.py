@@ -133,7 +133,7 @@ def write_view_params_file(
 def colmap_sparse_to_re10k_like_views(
         scene_colmap_sparse_path,
         views_file_output_path,
-        device,
+        device='cpu',
         scene_name='scene',
     ):
     """
