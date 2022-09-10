@@ -8,10 +8,10 @@ from typing import NamedTuple, Dict, Tuple, List
 import numpy as np
 import torch
 
-from utils.simple_matcher import SimpleMatcher
-from models.superglue import SuperGlue
-from models.superpoint import SuperPoint
-from utils.video_streamer import VideoStreamer
+from simple_sfm.utils.simple_matcher import SimpleMatcher
+from simple_sfm.models import SuperGlue
+from simple_sfm.models import SuperPoint
+from simple_sfm.utils.video_streamer import VideoStreamer
 
 logger = logging.getLogger(__name__)
 

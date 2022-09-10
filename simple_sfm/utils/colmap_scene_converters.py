@@ -6,8 +6,8 @@ import json
 import numpy as np
 import torch
 
-from utils.read_write_colmap_data import qvec2rotmat, read_model, rotmat
-from utils.camera_pinhole import CameraPinhole
+from simple_sfm.utils.read_write_colmap_data import qvec2rotmat, read_model, rotmat
+from simple_sfm.utils.camera_pinhole import CameraPinhole
 
 
 def get_info_from_colmap_scene(path_sparse, device='cuda'):

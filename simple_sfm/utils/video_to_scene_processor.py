@@ -1,4 +1,5 @@
-__all__ = ['SyncedMultiviewVideoSceneProcesser']
+__all__ = ['SyncedMultiviewVideoSceneProcesser',
+           'OneVideoSceneProcesser']
 
 import logging
 import math
