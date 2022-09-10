@@ -1,3 +1,4 @@
+import numpy as np
 
 def read_re10k_views(views_file_path, scale=1.0):
   with open(views_file_path) as f:
