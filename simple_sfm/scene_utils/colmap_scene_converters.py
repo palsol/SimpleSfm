@@ -172,13 +172,13 @@ def closest_point_2_lines(oa, da, ob, db):
     """
     returns point closest to both rays of form o+t*d, and a weight factor that goes to 0 if the lines are parallel
     """
-    da = da / np.linalg.norm(da)
-    db = db / np.linalg.norm(db)
-    c = np.cross(da, db)
-    denom = np.linalg.norm(c) ** 2
+    da = da / torch.linalg.norm(da)
+    db = db / torch.linalg.norm(db)
+    c = torch.cross(da, db)
+    denom = torch.linalg.norm(c) ** 2
     t = ob - oa
-    ta = np.linalg.det([t, db, c]) / (denom + 1e-10)
-    tb = np.linalg.det([t, da, c]) / (denom + 1e-10)
+    ta = torch.linalg.det(torch.stack([t, db, c], dim=1)[None]) / (denom + 1e-10)
+    tb = torch.linalg.det(torch.stack([t, da, c], dim=1)[None]) / (denom + 1e-10)
     if ta > 0:
         ta = 0
     if tb > 0:

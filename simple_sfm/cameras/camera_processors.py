@@ -1,7 +1,7 @@
 import torch
 
-from lib.modules.cameras.utils import average_extrinsics
-from lib.modules.cameras import CameraMultiple
+from simple_sfm.cameras.utils import average_extrinsics
+from simple_sfm.cameras import CameraMultiple
 
 
 def average_cam(cameras: CameraMultiple):

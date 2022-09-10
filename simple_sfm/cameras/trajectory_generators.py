@@ -3,7 +3,7 @@ from typing import Union, List, Tuple
 import numpy as np
 import torch
 
-from lib.utils.geometry import quanterion_between_two_vectors, rotation_matrix_to_quaternion, \
+from simple_sfm.utils.geometry import quanterion_between_two_vectors, rotation_matrix_to_quaternion, \
     quaternion_to_rotation_matrix, quanterion_mult
 
 

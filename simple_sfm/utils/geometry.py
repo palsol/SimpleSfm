@@ -464,3 +464,21 @@ def rotmat(a, b):
     kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
 
     return np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2 + 1e-10))
+
+
+def closest_point_2_lines(oa, da, ob, db):
+    """
+    returns point closest to both rays of form o+t*d, and a weight factor that goes to 0 if the lines are parallel
+    """
+    da = da / torch.linalg.norm(da)
+    db = db / torch.linalg.norm(db)
+    c = torch.cross(da, db)
+    denom = torch.linalg.norm(c) ** 2
+    t = ob - oa
+    ta = torch.linalg.det([t, db, c]) / (denom + 1e-10)
+    tb = torch.linalg.det([t, da, c]) / (denom + 1e-10)
+    if ta > 0:
+        ta = 0
+    if tb > 0:
+        tb = 0
+    return (oa + ta * da + ob + tb * db) * 0.5, denom

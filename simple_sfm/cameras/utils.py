@@ -5,8 +5,8 @@ from typing import List, Optional, Sequence, Tuple, Union
 
 import torch
 
-from lib.utils.geometry import average_rotation_matrices
-from lib.utils.coord_conversion import coords_pixel_to_film
+from simple_sfm.utils.geometry import average_rotation_matrices
+from simple_sfm.utils.coord_conversion import coords_pixel_to_film
 from .camera_multiple import CameraMultiple
 from .camera_pytorch3d import CameraPytorch3d
 
