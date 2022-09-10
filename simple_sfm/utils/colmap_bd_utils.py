@@ -408,7 +408,7 @@ class ColmapBdManager(object):
     def run_mapper(self):
         self.mapper(self.db_path, self.images_folder_path, self.sparse_path, self.camera_type, self.camera_params)
 
-        mapper_sparse_path = os.path.join(self.sparse_path, '0')
+        mapper_sparse_path = os.path.join(self.sparse_path)
         file_names = os.listdir(mapper_sparse_path)
         _, _, points3D = read_write_colmap_data.read_model(mapper_sparse_path)
         num_sparse_points = len(points3D)
