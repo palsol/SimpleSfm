@@ -5,7 +5,7 @@ import logging
 
 import torch
 
-from simple_sfm.cameras.cameras import CameraFrustum
+from simple_sfm.cameras import CameraFrustum
 
 logger = logging.getLogger(__name__)
 
