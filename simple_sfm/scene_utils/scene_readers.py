@@ -78,6 +78,7 @@ def read_image(image_path,
                 current_image = np.array(img)
                 current_image = (current_image / 255) * 2 - 1
                 current_image = current_image.transpose(2, 0, 1)
+                current_image = torch.from_numpy(current_image).float()
     except OSError as e:
         logger.error(f'Possibly, image file is broken: {image_path}')
         raise e
@@ -145,7 +146,6 @@ def read_re10k_views(views_file_path,
                                                   relative_intrinsics=True
                                                   )
             intrinsics.append(intrinsic)
-            current_frame = torch.from_numpy(current_frame).float()
             images.append(current_frame)
 
     return intrinsics, extrinsics, images
