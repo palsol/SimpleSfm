@@ -79,7 +79,7 @@ class SyncedMultiviewVideoSceneProcesser:
 
             if videos_stats[i]['num_frames'] != self.scene_num_frames:
                 logger.info(f"Video has different frame length {videos_stats[i]['num_frames']}"
-                             f" must be {self.scene_num_frames}, "
+                             f"must be {self.scene_num_frames}, "
                              f"video path: {videos_paths_list[i]}")
 
             self.videos_data[video_name] = {
@@ -189,9 +189,9 @@ class OneVideoSceneProcesser:
                     image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
                             width // 2 - self.center_crop // 2: width // 2 + self.center_crop // 2]
 
-                if self.center_crop is not None:
-                    width = int(image.shape[1] * self.center_crop)
-                    height = int(image.shape[0] * self.center_crop)
+                if self.scale_factor is not None:
+                    width = int(image.shape[1] * self.scale_factor)
+                    height = int(image.shape[0] * self.scale_factor)
                     dim = (width, height)
                     image = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
