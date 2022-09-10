@@ -9,8 +9,8 @@ import numpy as np
 import torch
 
 from simple_sfm.utils.simple_matcher import SimpleMatcher
-from simple_sfm.models import SuperGlue
-from simple_sfm.models import SuperPoint
+from simple_sfm.models.superglue import SuperGlue
+from simple_sfm.models.superpoint import SuperPoint
 from simple_sfm.utils.video_streamer import VideoStreamer
 
 logger = logging.getLogger(__name__)
