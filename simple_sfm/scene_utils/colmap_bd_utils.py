@@ -10,8 +10,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from simple_sfm.utils import read_write_colmap_data
-from simple_sfm.utils.matcher import Frame
+from simple_sfm.scene_utils import read_write_colmap_data
+from simple_sfm.scene_utils.matcher import Frame
 
 logger = logging.getLogger(__name__)
 

@@ -4,6 +4,7 @@ import numpy as np
 import torch
 
 
+
 def change_coordinate_system_orientation_metashape(extrinsic: np.ndarray) -> np.ndarray:
     """
     Convert extrinsics from metashape system to normal system.
@@ -69,7 +70,11 @@ def coords_cam_to_film(points) -> torch.Tensor:
     """
 
     assert points.dim() == 3
-    film_coords = points[..., :2] / points[..., -1:]
+    denominator = torch.where(points[..., -1:] >= 0,
+                              points[..., -1:].clamp(min=1e-6),
+                              points[..., -1:].clamp(max=-1e-6),
+                              )
+    film_coords = points[..., :2] / denominator
     return film_coords
 
 
@@ -233,5 +238,3 @@ def get_cameras_world_positions(extrinsics: torch.Tensor) -> torch.Tensor:
 
     x = torch.zeros(extrinsics.shape[0], 1, 3, device=extrinsics.device)
     return coords_cam_to_world(x, extrinsics)
-
-

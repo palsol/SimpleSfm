@@ -16,7 +16,7 @@ from simple_sfm.utils.coord_conversion import (coords_cam_to_film,
                                                coords_world_to_cam,
                                                get_cameras_world_positions,
                                                )
-from simple_sfm.utils.read_write_colmap_data import qvec2rotmat
+from simple_sfm.utils.geometry import qvec2rotmat
 
 
 class CameraPinhole:
