@@ -283,6 +283,7 @@ class ColmapBdManager(object):
                             '--ImageReader.camera_params', str(self.camera_params)[1:-1].replace(' ', '')])
 
         env = os.environ.copy()
+        print('dddddd')
         subprocess.Popen(command,
                        # shell=True,
                        # env=env,
@@ -290,7 +291,8 @@ class ColmapBdManager(object):
                        # stderr=subprocess.DEVNULL,
                        # check=True
                        )
-
+        print('dddddd')
+        
     def build_initial_folder_from_known_camera_parameters(self,
                                                           poses: Dict,
                                                           W: int,
