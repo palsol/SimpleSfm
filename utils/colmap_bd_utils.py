@@ -112,10 +112,8 @@ class ColmapBdManager(object):
                             '--Mapper.ba_refine_extra_params', '1',
                             '--Mapper.ba_refine_principal_point', '1'])
 
-        subprocess.run(command,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+        command = ' '.join(command)
+        !{command}
 
         end = time.time()
         logger.info(f'Finished'
@@ -131,17 +129,17 @@ class ColmapBdManager(object):
         logger.info('Starts point triangulator.')
         start = time.time()
 
-        subprocess.run(['colmap', 'point_triangulator',
+        command = ['colmap', 'point_triangulator',
                         '--log_level', '1',
                         '--Mapper.init_min_tri_angle', '4',
                         '--Mapper.init_min_num_inliers', '25',
                         '--database_path', db_path,
                         '--image_path', images_folder_path,
                         '--input_path', sparse_path,
-                        '--output_path', output_path],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+                        '--output_path', output_path]
+
+        command = ' '.join(command)
+        !{command}
 
         end = time.time()
         logger.info(f'Finished'
@@ -153,7 +151,7 @@ class ColmapBdManager(object):
         logger.info('Starts image_undistorter.')
         start = time.time()
 
-        subprocess.run(['colmap',
+        command = ['colmap',
                         'image_undistorter',
                         '--image_path', images_folder_path,
                         '--input_path', sparse_path,
@@ -161,10 +159,9 @@ class ColmapBdManager(object):
                         '--output_type', 'COLMAP',
                         '--min_scale', str(0.9),
                         '--max_image_size', str(size),
-                        ],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+                        ]
+        command = ' '.join(command)
+        !{command}
 
         end = time.time()
         logger.info(f'Finished'
@@ -173,16 +170,16 @@ class ColmapBdManager(object):
         logger.info('Starts patch_match_stereo.')
         start = time.time()
 
-        subprocess.run([
+        command = [
             'colmap',
             'patch_match_stereo',
             '--workspace_path', output_path,
             '--workspace_format', 'COLMAP',
             '--PatchMatchStereo.geom_consistency', 'true',
-        ],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True)
+        ]
+
+        command = ' '.join(command)
+        !{command}
 
         end = time.time()
         logger.info(f'Finished'
@@ -194,16 +191,15 @@ class ColmapBdManager(object):
         logger.info('Starts stereo_fusion.')
         start = time.time()
 
-        subprocess.run(['colmap',
+        command = ['colmap',
                         'stereo_fusion',
                         '--workspace_path', dense_path,
                         '--workspace_format', 'COLMAP',
                         '--input_type', 'geometric',
                         '--output_path', output_path,
-                        ],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+                        ]
+        command = ' '.join(command)
+        !{command}
 
         end = time.time()
         logger.info(f'Finished'
@@ -268,10 +264,8 @@ class ColmapBdManager(object):
             command.extend(['--ImageReader.camera_model', self.camera_type,
                             '--ImageReader.camera_params', str(self.camera_params)[1:-1].replace(' ', '')])
 
-        subprocess.run(command,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+        command = ' '.join(command)
+        !{command}
 
     def build_initial_folder_from_known_camera_parameters(self,
                                                           poses: Dict,
@@ -372,13 +366,12 @@ class ColmapBdManager(object):
         match_txt_path = os.path.join(self.db_dir, 'match.txt')
         np.savetxt(match_txt_path, match_table_txt, fmt="%s", delimiter=' ')
 
-        subprocess.run(['colmap', 'matches_importer',
+        command = ['colmap', 'matches_importer',
                         '--database_path', self.db_path,
                         '--match_list_path', match_txt_path,
-                        '--match_type', 'pairs'],
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL
-                       )
+                        '--match_type', 'pairs']
+        command = ' '.join(command)
+        !{command}
 
         end = time.time()
         logger.info(f'Finished \n'
