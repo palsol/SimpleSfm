@@ -284,8 +284,8 @@ class ColmapBdManager(object):
 
         env = os.environ.copy()
         subprocess.Popen(command,
-                       shell=True,
-                       env=env,
+                       # shell=True,
+                       # env=env,
                        # stdout=subprocess.DEVNULL,
                        # stderr=subprocess.DEVNULL,
                        # check=True
