@@ -395,16 +395,16 @@ class ColmapBdManager(object):
         np.savetxt(match_txt_path, match_table_txt, fmt="%s", delimiter=' ')
 
         env = os.environ.copy()
-        subprocess.Popen((['colmap', 'matches_importer',
-                           '--SiftMatching.use_gpu', '0',
-                           '--database_path', self.db_path,
-                           '--match_list_path', match_txt_path,
-                           '--match_type', 'pairs'],
-                          # shell=True,
-                          # env=env,
-                          # stdout=subprocess.DEVNULL,
-                          # stderr=subprocess.DEVNULL
-                          )
+        subprocess.Popen(['colmap', 'matches_importer',
+                          '--SiftMatching.use_gpu', '0',
+                          '--database_path', self.db_path,
+                          '--match_list_path', match_txt_path,
+                          '--match_type', 'pairs'],
+                         # shell=True,
+                         # env=env,
+                         # stdout=subprocess.DEVNULL,
+                         # stderr=subprocess.DEVNULL
+                         )
 
         end = time.time()
         logger.info(f'Finished \n'
