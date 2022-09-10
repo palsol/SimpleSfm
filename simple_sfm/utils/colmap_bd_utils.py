@@ -112,12 +112,13 @@ class ColmapBdManager(object):
                             '--Mapper.ba_refine_extra_params', '1',
                             '--Mapper.ba_refine_principal_point', '1'])
         env = os.environ.copy()
-        subprocess.run(command,
-                       shell=True,
-                       env=env,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+        subprocess.Popen(command,
+                         # shell=True,
+                         # env=env,
+                         # stdout=subprocess.DEVNULL,
+                         # stderr=subprocess.DEVNULL,
+                         # check=True
+                         )
 
         end = time.time()
         logger.info(f'Finished'
@@ -134,18 +135,19 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.run(['colmap', 'point_triangulator',
-                        '--Mapper.init_min_tri_angle', '4',
-                        '--Mapper.init_min_num_inliers', '25',
-                        '--database_path', db_path,
-                        '--image_path', images_folder_path,
-                        '--input_path', sparse_path,
-                        '--output_path', output_path],
-                       shell=True,
-                       env=env,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+        subprocess.Popen(['colmap', 'point_triangulator',
+                          '--Mapper.init_min_tri_angle', '4',
+                          '--Mapper.init_min_num_inliers', '25',
+                          '--database_path', db_path,
+                          '--image_path', images_folder_path,
+                          '--input_path', sparse_path,
+                          '--output_path', output_path],
+                         # shell=True,
+                         # env=env,
+                         # stdout=subprocess.DEVNULL,
+                         # stderr=subprocess.DEVNULL,
+                         # check=True
+                         )
 
         end = time.time()
         logger.info(f'Finished'
@@ -158,20 +160,21 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.run(['colmap',
-                        'image_undistorter',
-                        '--image_path', images_folder_path,
-                        '--input_path', sparse_path,
-                        '--output_path', output_path,
-                        '--output_type', 'COLMAP',
-                        '--min_scale', str(0.9),
-                        '--max_image_size', str(size),
-                        ],
-                       shell=True,
-                       env=env,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+        subprocess.Popen(['colmap',
+                          'image_undistorter',
+                          '--image_path', images_folder_path,
+                          '--input_path', sparse_path,
+                          '--output_path', output_path,
+                          '--output_type', 'COLMAP',
+                          '--min_scale', str(0.9),
+                          '--max_image_size', str(size),
+                          ],
+                         # shell=True,
+                         # env=env,
+                         # stdout=subprocess.DEVNULL,
+                         # stderr=subprocess.DEVNULL,
+                         # check=True
+                         )
 
         end = time.time()
         logger.info(f'Finished'
@@ -181,18 +184,19 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.run([
+        subprocess.Popen([
             'colmap',
             'patch_match_stereo',
             '--workspace_path', output_path,
             '--workspace_format', 'COLMAP',
             '--PatchMatchStereo.geom_consistency', 'true',
         ],
-                       shell=True,
-                       env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            check=True)
+            # shell=True,
+            # env=env,
+            # stdout=subprocess.DEVNULL,
+            # stderr=subprocess.DEVNULL,
+            # check=True
+        )
 
         end = time.time()
         logger.info(f'Finished'
@@ -205,18 +209,19 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.run(['colmap',
-                        'stereo_fusion',
-                        '--workspace_path', dense_path,
-                        '--workspace_format', 'COLMAP',
-                        '--input_type', 'geometric',
-                        '--output_path', output_path,
-                        ],
-                       shell=True,
-                       env=env,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+        subprocess.Popen(['colmap',
+                          'stereo_fusion',
+                          '--workspace_path', dense_path,
+                          '--workspace_format', 'COLMAP',
+                          '--input_type', 'geometric',
+                          '--output_path', output_path,
+                          ],
+                         # shell=True,
+                         # env=env,
+                         # stdout=subprocess.DEVNULL,
+                         # stderr=subprocess.DEVNULL,
+                         # check=True
+                         )
 
         end = time.time()
         logger.info(f'Finished'
@@ -283,12 +288,12 @@ class ColmapBdManager(object):
 
         env = os.environ.copy()
         subprocess.Popen(command,
-                       # shell=True,
-                       # env=env,
-                       # stdout=subprocess.DEVNULL,
-                       # stderr=subprocess.DEVNULL,
-                       # check=True
-                       )
+                         # shell=True,
+                         # env=env,
+                         # stdout=subprocess.DEVNULL,
+                         # stderr=subprocess.DEVNULL,
+                         # check=True
+                         )
 
     def build_initial_folder_from_known_camera_parameters(self,
                                                           poses: Dict,
@@ -390,25 +395,25 @@ class ColmapBdManager(object):
         np.savetxt(match_txt_path, match_table_txt, fmt="%s", delimiter=' ')
 
         env = os.environ.copy()
-        subprocess.run(['colmap', 'matches_importer',
-                        '--SiftMatching.use_gpu', '0',
-                        '--database_path', self.db_path,
-                        '--match_list_path', match_txt_path,
-                        '--match_type', 'pairs'],
-                       shell=True,
-                       env=env,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL
-                       )
+        subprocess.Popen((['colmap', 'matches_importer',
+                           '--SiftMatching.use_gpu', '0',
+                           '--database_path', self.db_path,
+                           '--match_list_path', match_txt_path,
+                           '--match_type', 'pairs'],
+                          # shell=True,
+                          # env=env,
+                          # stdout=subprocess.DEVNULL,
+                          # stderr=subprocess.DEVNULL
+                          )
 
         end = time.time()
         logger.info(f'Finished \n'
-                     f'Elapsed time: {float(end - start)} \n')
+                    f'Elapsed time: {float(end - start)} \n')
 
     def run_mapper(self):
         self.mapper(self.db_path, self.images_folder_path, self.sparse_path, self.camera_type, self.camera_params)
 
-        mapper_sparse_path = os.path.join(self.sparse_path)
+        mapper_sparse_path = os.path.join(self.sparse_path, '0')
         file_names = os.listdir(mapper_sparse_path)
         _, _, points3D = read_write_colmap_data.read_model(mapper_sparse_path)
         num_sparse_points = len(points3D)
