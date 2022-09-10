@@ -283,7 +283,7 @@ class ColmapBdManager(object):
                             '--ImageReader.camera_params', str(self.camera_params)[1:-1].replace(' ', '')])
 
         env = os.environ.copy()
-        subprocess.run(command,
+        subprocess.Popen(command,
                        shell=True,
                        env=env,
                        # stdout=subprocess.DEVNULL,
