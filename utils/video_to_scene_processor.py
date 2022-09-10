@@ -52,7 +52,8 @@ class SyncedMultiviewVideoSceneProcesser:
                  max_len=None,
                  skip=None,
                  center_crop=False,
-                 scale_factor=None
+                 scale_factor=None,
+                 img_prefix='jpg'
                  ):
 
         self.data_path = data_path
@@ -61,6 +62,7 @@ class SyncedMultiviewVideoSceneProcesser:
         self.max_len = max_len
         self.center_crop = center_crop
         self.scale_factor = scale_factor
+        self.img_prefix = img_prefix
 
         os.makedirs(self.dataset_output_path, exist_ok=True)
         os.makedirs(self.dataset_frames_path, exist_ok=True)
@@ -114,7 +116,7 @@ class SyncedMultiviewVideoSceneProcesser:
                 if video_data['rotation'] is not None:
                     image = correct_rotation(image, video_data['rotation'])
                 if count in times_ids:
-                    frame_path = os.path.join(times_frame_paths[count], f'{video_name}_{count:09d}' + '.jpg')
+                    frame_path = os.path.join(times_frame_paths[count], f'{video_name}_{count:09d}.' + self.img_prefix)
                     if self.center_crop:
                         height, width, channels = image.shape
                         image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
@@ -129,3 +131,69 @@ class SyncedMultiviewVideoSceneProcesser:
                     cv2.imwrite(frame_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
                 success, image = vidcap.read()
                 count += 1
+
+
+class OneVideoSceneProcesser:
+    def __init__(self,
+                 video_path,
+                 dataset_output_path,
+                 max_len=None,
+                 skip=None,
+                 center_crop=False,
+                 scale_factor=None,
+                 img_prefix='jpg'
+                 ):
+
+        self.video_path = video_path
+        self.dataset_output_path = dataset_output_path
+        self.dataset_frames_path = os.path.join(self.dataset_output_path, 'frames')
+        self.max_len = max_len
+        self.center_crop = center_crop
+        self.scale_factor = scale_factor
+        self.img_prefix = img_prefix
+
+        os.makedirs(self.dataset_output_path, exist_ok=True)
+        os.makedirs(self.dataset_frames_path, exist_ok=True)
+
+        videos_stats = get_video_stats(self.video_path)
+        self.scene_num_frames = videos_stats['num_frames']
+
+        if skip is None:
+            if self.max_len is None:
+                self.skip = 1
+            elif self.max_len < self.scene_num_frames:
+                self.skip = math.ceil(self.scene_num_frames / self.max_len)
+            else:
+                self.skip = 1
+        else:
+            self.skip = skip
+
+        logger.info(f'Every {self.skip} will be skipped')
+
+    def run(self):
+
+        vidcap = cv2.VideoCapture(self.video_path)
+        rotateCode = check_rotation(self.video_path)
+
+        success, image = vidcap.read()
+
+        count = 0
+        while success:
+            if rotateCode is not None:
+                image = correct_rotation(image, rotateCode)
+            if count % self.skip == 0:
+                frame_path = os.path.join(self.dataset_frames_path, f'{count:05d}.' + self.img_prefix)
+                if self.center_crop:
+                    height, width, channels = image.shape
+                    image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
+                            width // 2 - self.center_crop // 2: width // 2 + self.center_crop // 2]
+
+                if self.center_crop is not None:
+                    width = int(image.shape[1] * self.center_crop)
+                    height = int(image.shape[0] * self.center_crop)
+                    dim = (width, height)
+                    image = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
+
+                cv2.imwrite(frame_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+            success, image = vidcap.read()
+            count += 1
