@@ -3,6 +3,7 @@ __all__ = ['ColmapBdManager']
 import os
 import shutil
 import sqlite3
+import subprocess
 import logging
 import time
 from typing import Dict, List, Tuple
