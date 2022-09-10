@@ -112,7 +112,7 @@ class ColmapBdManager(object):
                             '--Mapper.ba_refine_extra_params', '1',
                             '--Mapper.ba_refine_principal_point', '1'])
         env = os.environ.copy()
-        subprocess.Popen(command,
+        subprocess.check_call(command,
                          # shell=True,
                          # env=env,
                          # stdout=subprocess.DEVNULL,
@@ -135,7 +135,7 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.Popen(['colmap', 'point_triangulator',
+        subprocess.check_call(['colmap', 'point_triangulator',
                           '--Mapper.init_min_tri_angle', '4',
                           '--Mapper.init_min_num_inliers', '25',
                           '--database_path', db_path,
@@ -160,7 +160,7 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.Popen(['colmap',
+        subprocess.check_call(['colmap',
                           'image_undistorter',
                           '--image_path', images_folder_path,
                           '--input_path', sparse_path,
@@ -184,7 +184,7 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.Popen([
+        subprocess.check_call([
             'colmap',
             'patch_match_stereo',
             '--workspace_path', output_path,
@@ -209,7 +209,7 @@ class ColmapBdManager(object):
         start = time.time()
 
         env = os.environ.copy()
-        subprocess.Popen(['colmap',
+        subprocess.check_call(['colmap',
                           'stereo_fusion',
                           '--workspace_path', dense_path,
                           '--workspace_format', 'COLMAP',
@@ -287,7 +287,7 @@ class ColmapBdManager(object):
                             '--ImageReader.camera_params', str(self.camera_params)[1:-1].replace(' ', '')])
 
         env = os.environ.copy()
-        subprocess.Popen(command,
+        subprocess.check_call(command,
                          # shell=True,
                          # env=env,
                          # stdout=subprocess.DEVNULL,
@@ -400,7 +400,7 @@ class ColmapBdManager(object):
                    '--database_path', self.db_path,
                    '--match_list_path', match_txt_path,
                    '--match_type', 'pairs']
-        subprocess.Popen(command,
+        subprocess.check_call(command,
                          # shell=True,
                          # env=env,
                          # stdout=subprocess.DEVNULL,
