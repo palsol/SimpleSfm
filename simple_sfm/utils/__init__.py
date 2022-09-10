@@ -1,1 +1,1 @@
-from video_to_scene_processor import *
+from .video_to_scene_processors import *
