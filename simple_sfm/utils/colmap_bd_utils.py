@@ -270,7 +270,8 @@ class ColmapBdManager(object):
         # TODO  Implement creating database without calling feature_extractor command.
 
         command = ['colmap', 'feature_extractor',
-                   '--log_level', '0',
+                   #  '--log_level', '0',
+                   '--SiftExtraction.use_gpu', '0',
                    '--ImageReader.single_camera', '1',
                    '--ImageReader.default_focal_length_factor', '0.85',
                    '--SiftExtraction.peak_threshold', '0.02',
@@ -283,7 +284,6 @@ class ColmapBdManager(object):
                             '--ImageReader.camera_params', str(self.camera_params)[1:-1].replace(' ', '')])
 
         env = os.environ.copy()
-        print('dddddd')
         subprocess.Popen(command,
                        # shell=True,
                        # env=env,
@@ -291,8 +291,7 @@ class ColmapBdManager(object):
                        # stderr=subprocess.DEVNULL,
                        # check=True
                        )
-        print('dddddd')
-        
+
     def build_initial_folder_from_known_camera_parameters(self,
                                                           poses: Dict,
                                                           W: int,
