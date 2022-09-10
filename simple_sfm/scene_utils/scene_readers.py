@@ -7,6 +7,9 @@ import numpy as np
 from PIL import Image, ImageFile
 import torch
 
+import logging
+logger = logging.getLogger(__name__)
+
 from simple_sfm.utils.coord_conversion import coords_pixel_to_film
 
 
@@ -70,15 +73,16 @@ def read_image(image_path,
                     shortest_idx = np.argsort(img_size)[0]
                     resize_ratio = image_resize_size / img_size[shortest_idx]
                     image_resize_size = [int(resize_ratio * img_size[1]), int(resize_ratio * img_size[0])]
-                current_image = img.resize(image_resize_size)
+                img = img.resize(image_resize_size)
                 image_size = image_resize_size
             else:
                 w, h = img.size
                 image_size = [h, w]
-                current_image = np.array(img)
-                current_image = (current_image / 255) * 2 - 1
-                current_image = current_image.transpose(2, 0, 1)
-                current_image = torch.from_numpy(current_image).float()
+                
+            current_image = np.array(img)
+            current_image = (current_image / 255) * 2 - 1
+            current_image = current_image.transpose(2, 0, 1)
+            current_image = torch.from_numpy(current_image).float()
     except OSError as e:
         logger.error(f'Possibly, image file is broken: {image_path}')
         raise e
