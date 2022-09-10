@@ -105,7 +105,7 @@ class ColmapBdManager(object):
                    '--Mapper.max_num_models', '1',
                    '--database_path', db_path,
                    '--image_path', images_folder_path,
-                   '--output_path', sparse_path]
+                   '--export_path', sparse_path]
 
         if camera_type is not None and camera_params is not None:
             command.extend(['--Mapper.ba_refine_focal_length', '1',
@@ -395,11 +395,12 @@ class ColmapBdManager(object):
         np.savetxt(match_txt_path, match_table_txt, fmt="%s", delimiter=' ')
 
         env = os.environ.copy()
-        subprocess.Popen(['colmap', 'matches_importer',
-                          '--SiftMatching.use_gpu', '0',
-                          '--database_path', self.db_path,
-                          '--match_list_path', match_txt_path,
-                          '--match_type', 'pairs'],
+        command = ['colmap', 'matches_importer',
+                   '--SiftMatching.use_gpu', '0',
+                   '--database_path', self.db_path,
+                   '--match_list_path', match_txt_path,
+                   '--match_type', 'pairs']
+        subprocess.Popen(command,
                          # shell=True,
                          # env=env,
                          # stdout=subprocess.DEVNULL,
