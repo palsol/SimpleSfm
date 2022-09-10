@@ -135,7 +135,6 @@ class ColmapBdManager(object):
 
         env = os.environ.copy()
         subprocess.run(['colmap', 'point_triangulator',
-                        '--log_level', '1',
                         '--Mapper.init_min_tri_angle', '4',
                         '--Mapper.init_min_num_inliers', '25',
                         '--database_path', db_path,
@@ -270,7 +269,6 @@ class ColmapBdManager(object):
         # TODO  Implement creating database without calling feature_extractor command.
 
         command = ['colmap', 'feature_extractor',
-                   #  '--log_level', '0',
                    '--SiftExtraction.use_gpu', '0',
                    '--ImageReader.single_camera', '1',
                    '--ImageReader.default_focal_length_factor', '0.85',
@@ -393,6 +391,7 @@ class ColmapBdManager(object):
 
         env = os.environ.copy()
         subprocess.run(['colmap', 'matches_importer',
+                        '--SiftMatching.use_gpu', '0',
                         '--database_path', self.db_path,
                         '--match_list_path', match_txt_path,
                         '--match_type', 'pairs'],
