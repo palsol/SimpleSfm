@@ -286,9 +286,10 @@ class ColmapBdManager(object):
         subprocess.run(command,
                        shell=True,
                        env=env,
-                       stdout=subprocess.DEVNULL,
-                       stderr=subprocess.DEVNULL,
-                       check=True)
+                       # stdout=subprocess.DEVNULL,
+                       # stderr=subprocess.DEVNULL,
+                       # check=True
+                       )
 
     def build_initial_folder_from_known_camera_parameters(self,
                                                           poses: Dict,
