@@ -69,14 +69,14 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     percentiles = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99]
 
     for el in percentiles:
-        info['p_' + str(el)] = np.percentile(depth_numpy, el)
+        info['p_' + str(el)] = float(np.percentile(depth_numpy, el))
 
     error = np.array([el.error for el in points3D_colmap.values()])
-    info['error_mean'] = error.mean()
-    info['error_std'] = error.std()
+    info['error_mean'] = float(error.mean())
+    info['error_std'] = float(error.std())
 
-    info['num_points'] = len(points3D_colmap)
-    info['num_views'] = len(images_colmap)
+    info['num_points'] = int(len(points3D_colmap))
+    info['num_views'] = int(len(images_colmap))
 
     camera_colmap = cameras_colmap[1]
 
@@ -87,43 +87,43 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     # info['c_x'] = camera_colmap.width / 2
     # info['c_y'] = camera_colmap.height / 2
     if camera_colmap.model == 'PINHOLE':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[0] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[1] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[2] / camera_colmap.height
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
     elif camera_colmap.model == 'SIMPLE_RADIAL':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[0] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[1] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[2] / camera_colmap.height
-        info['k1'] = camera_colmap.params[3]
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[3])
     elif camera_colmap.model == 'RADIAL':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[1] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[2] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[3] / camera_colmap.height
-        info['k1'] = camera_colmap.params[4]
-        info['k1'] = camera_colmap.params[5]
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[4])
+        info['k1'] = float(camera_colmap.params[5])
     elif camera_colmap.model == 'OPENCV':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[1] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[2] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[3] / camera_colmap.height
-        info['k1'] = camera_colmap.params[4]
-        info['k2'] = camera_colmap.params[5]
-        info['p1'] = camera_colmap.params[6]
-        info['p2'] = camera_colmap.params[7]
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[4])
+        info['k2'] = float(camera_colmap.params[5])
+        info['p1'] = float(camera_colmap.params[6])
+        info['p2'] = float(camera_colmap.params[7])
     else:
         print(f'Camera type is not supported, {camera_colmap}')
         return None
 
-    info['angle_x'] = math.atan(1.0 / (info['f_x'] * 2)) * 2
-    info['angle_y'] = math.atan(1.0 / (info['f_y'] * 2)) * 2
-    info['fov_x'] = info['angle_x'] * 180 / math.pi
-    info['fov_y'] = info['angle_y'] * 180 / math.pi
+    info['angle_x'] = float(math.atan(1.0 / (info['f_x'] * 2)) * 2)
+    info['angle_y'] = float(math.atan(1.0 / (info['f_y'] * 2)) * 2)
+    info['fov_x'] = float(info['angle_x'] * 180 / math.pi)
+    info['fov_y'] = float(info['angle_y'] * 180 / math.pi)
 
-    info['original_resolution_x'] = camera_colmap.width
-    info['original_resolution_y'] = camera_colmap.height
+    info['original_resolution_x'] = int(camera_colmap.width)
+    info['original_resolution_y'] = int(camera_colmap.height)
 
     images_colmap_undistorted = None
 
