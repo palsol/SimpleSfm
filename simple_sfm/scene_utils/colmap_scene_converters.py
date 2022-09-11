@@ -308,6 +308,7 @@ def colmap_sparse_to_re10k_like_views(
         views_file_output_path,
         device='cpu',
         scene_name='scene',
+        scene_meta_file_output_path=None,
 ):
     """
     Generate file with views in RE10k style from colmap sparse data.
@@ -316,6 +317,7 @@ def colmap_sparse_to_re10k_like_views(
     :param views_file_output_path: path to dir where views.txt will be stored
     :param device: device for processing
     :param scene_name:
+    :param scene_meta_file_output_path: path to store scene meta yaml
     :return:
     """
     scene_views_file_path = os.path.join(views_file_output_path, 'views.txt')
@@ -325,7 +327,8 @@ def colmap_sparse_to_re10k_like_views(
         images_colmap,
         scene_name=scene_name,
         scene_info=info,
-        views_output_file_path=scene_views_file_path
+        views_output_file_path=scene_views_file_path,
+        scene_meta_file_output_path=scene_meta_file_output_path,
     )
 
 
