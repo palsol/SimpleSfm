@@ -2,6 +2,7 @@ import os
 import math
 from collections import OrderedDict
 import json
+import yaml
 
 import numpy as np
 import torch
@@ -133,7 +134,8 @@ def write_view_params_file_re10k_like(
         images_colmap,
         scene_info,
         scene_name,
-        views_output_file_path
+        views_output_file_path,
+        scene_meta_file_path=None,
 ):
     """
     Write information about scene views (intrinsics, extrinsics) to RealEstate10K like txt file.
@@ -166,6 +168,11 @@ def write_view_params_file_re10k_like(
         frame_id = item[1].name.split('.')[0]
         f.write(frame_id + " " + intrinsic_str + " " + extrinsic_str + "\n")
     f.close()
+
+    if scene_meta_file_path is not None:
+        with open('scene_meta.yml', 'w+') as outfile:
+            scene_info['scene_name'] = scene_name
+            yaml.dump(scene_info, outfile, default_flow_style=False)
 
 
 def closest_point_2_lines(oa, da, ob, db):

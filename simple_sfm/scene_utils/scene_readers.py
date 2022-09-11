@@ -2,6 +2,7 @@ from typing import Tuple
 import os
 import math
 from glob import glob
+import yaml
 
 import numpy as np
 from PIL import Image, ImageFile
@@ -78,7 +79,7 @@ def read_image(image_path,
             else:
                 w, h = img.size
                 image_size = [h, w]
-                
+
             current_image = np.array(img)
             current_image = (current_image / 255) * 2 - 1
             current_image = current_image.transpose(2, 0, 1)
@@ -111,7 +112,9 @@ def read_re10k_views(views_file_path,
                      frames_resize_size=None,
                      frames_crop_size=None,
                      translation_scale=1.0,
-                     images_ext='jpg'
+                     images_ext='jpg',
+                     scene_meta_path=None,
+                     use_scale_precentile='p_10',
                      ):
     frames_paths = glob(os.path.join(frames_path, '*.' + images_ext))
     frames_names = [el.split('/')[-1].split('.')[0] for el in frames_paths]
@@ -119,6 +122,11 @@ def read_re10k_views(views_file_path,
 
     with open(views_file_path) as f:
         text = f.read()
+
+    if scene_meta_path is not None:
+        scene_meta = yaml.safe_load(scene_meta_path)
+        if use_scale_precentile is not None:
+            translation_scale = scene_meta[use_scale_precentile] / translation_scale
 
     rows = text.split('\n')[1:-1]
     intrinsics = []
