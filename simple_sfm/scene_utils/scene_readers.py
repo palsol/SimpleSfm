@@ -124,10 +124,14 @@ def read_re10k_views(views_file_path,
         text = f.read()
 
     if scene_meta_path is not None:
-        scene_meta = yaml.safe_load(scene_meta_path)
-        if use_scale_precentile is not None:
-            translation_scale = scene_meta[use_scale_precentile] / translation_scale
-
+        with open(scene_meta_path, 'r') as stream:
+            try:
+                scene_meta = yaml.safe_load(stream)
+                if use_scale_precentile is not None:
+                    translation_scale = scene_meta[use_scale_precentile] / translation_scale
+            except yaml.YAMLError as exc:
+                print(exc)
+                
     rows = text.split('\n')[1:-1]
     intrinsics = []
     extrinsics = []
