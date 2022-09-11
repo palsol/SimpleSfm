@@ -135,7 +135,7 @@ def write_view_params_file_re10k_like(
         scene_info,
         scene_name,
         views_output_file_path,
-        scene_meta_file_path=None,
+        scene_meta_file_output_path=None,
 ):
     """
     Write information about scene views (intrinsics, extrinsics) to RealEstate10K like txt file.
@@ -169,8 +169,8 @@ def write_view_params_file_re10k_like(
         f.write(frame_id + " " + intrinsic_str + " " + extrinsic_str + "\n")
     f.close()
 
-    if scene_meta_file_path is not None:
-        with open('scene_meta.yml', 'w+') as outfile:
+    if scene_meta_file_output_path is not None:
+        with open(os.path.join(scene_meta_file_output_path, 'scene_meta.yaml'), 'w+') as outfile:
             scene_info['scene_name'] = scene_name
             yaml.dump(scene_info, outfile, default_flow_style=False)
 
