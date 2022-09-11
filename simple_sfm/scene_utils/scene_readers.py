@@ -74,7 +74,7 @@ def read_image(image_path,
                     shortest_idx = np.argsort(img_size)[0]
                     resize_ratio = image_resize_size / img_size[shortest_idx]
                     image_resize_size = [int(resize_ratio * img_size[1]), int(resize_ratio * img_size[0])]
-                img = img.resize(image_resize_size)
+                img = img.resize([image_resize_size[1], image_resize_size[0]])
                 image_size = image_resize_size
             else:
                 w, h = img.size
