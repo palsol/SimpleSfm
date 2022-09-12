@@ -212,20 +212,20 @@ class OneVideoSceneProcesser:
             success, image = vidcap.read()
             count += 1
 
-        images_sharpness = sorted(images_sharpness, key=lambda x: x[1])
-
-        for el in images_sharpness[:-self.max_len]:
-            os.remove(el[0])
-
-        # shift = 0
-        # while shift < self.scene_num_frames:
-        #     sub_seq = images_sharpness[shift:shift + self.skip]
-        #     sub_seq = sorted(sub_seq, key=lambda x: x[2])
-        #     for el in sub_seq[:-1]:
-        #         os.remove(el[1])
-        #     curr_pos = sub_seq[-1][0]
+        # images_sharpness = sorted(images_sharpness, key=lambda x: x[1])
         #
-        #     for el in images_sharpness[shift + self.skip:curr_pos + self.skip]:
-        #         os.remove(el[1])
-        #
-        #     shift = curr_pos + self.skip
+        # for el in images_sharpness[:-self.max_len]:
+        #     os.remove(el[0])
+
+        shift = 0
+        while shift < self.scene_num_frames:
+            sub_seq = images_sharpness[shift:shift + self.skip]
+            sub_seq = sorted(sub_seq, key=lambda x: x[2])
+            for el in sub_seq[:-1]:
+                os.remove(el[1])
+            curr_pos = sub_seq[-1][0]
+
+            for el in images_sharpness[shift + self.skip:curr_pos + self.skip]:
+                os.remove(el[1])
+
+            shift = curr_pos + self.skip
