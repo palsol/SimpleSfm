@@ -34,6 +34,16 @@ def correct_rotation(frame, rotateCode):
     return cv2.rotate(frame, rotateCode)
 
 
+def variance_of_laplacian(image):
+    return cv2.Laplacian(image, cv2.CV_64F).var()
+
+
+def sharpness(image):
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    fm = variance_of_laplacian(gray)
+    return fm
+
+
 def get_video_stats(video_path):
     vidcap = cv2.VideoCapture(video_path)
     rotateCode = check_rotation(video_path)
@@ -79,8 +89,8 @@ class SyncedMultiviewVideoSceneProcesser:
 
             if videos_stats[i]['num_frames'] != self.scene_num_frames:
                 logger.info(f"Video has different frame length {videos_stats[i]['num_frames']}"
-                             f"must be {self.scene_num_frames}, "
-                             f"video path: {videos_paths_list[i]}")
+                            f"must be {self.scene_num_frames}, "
+                            f"video path: {videos_paths_list[i]}")
 
             self.videos_data[video_name] = {
                 'video_path': video_path,
@@ -142,7 +152,8 @@ class OneVideoSceneProcesser:
                  skip=None,
                  center_crop=False,
                  scale_factor=None,
-                 img_prefix='jpg'
+                 img_prefix='jpg',
+                 filter_with_sharpness=False,
                  ):
 
         self.video_path = video_path
@@ -152,6 +163,7 @@ class OneVideoSceneProcesser:
         self.center_crop = center_crop
         self.scale_factor = scale_factor
         self.img_prefix = img_prefix
+        self.filter_with_sharpness = filter_with_sharpness
 
         os.makedirs(self.dataset_output_path, exist_ok=True)
         os.makedirs(self.dataset_frames_path, exist_ok=True)
@@ -159,17 +171,20 @@ class OneVideoSceneProcesser:
         videos_stats = get_video_stats(self.video_path)
         self.scene_num_frames = videos_stats['num_frames']
 
-        if skip is None:
-            if self.max_len is None:
-                self.skip = 1
-            elif self.max_len < self.scene_num_frames:
-                self.skip = math.ceil(self.scene_num_frames / self.max_len)
-            else:
-                self.skip = 1
+        if self.filter_with_sharpness:
+            self.skip = 1
         else:
-            self.skip = skip
+            if skip is None:
+                if self.max_len is None:
+                    self.skip = 1
+                elif self.max_len < self.scene_num_frames:
+                    self.skip = math.ceil(self.scene_num_frames / self.max_len)
+                else:
+                    self.skip = 1
+            else:
+                self.skip = skip
 
-        logger.info(f'Every {self.skip} will be skipped')
+        logger.info(f'Every {self.skip} will be skipped, filter with sharpness {self.filter_with_sharpness}')
 
     def run(self):
 
@@ -177,12 +192,12 @@ class OneVideoSceneProcesser:
         rotateCode = check_rotation(self.video_path)
 
         success, image = vidcap.read()
-
+        images_sharpness = []
         count = 0
         while success:
             if rotateCode is not None:
                 image = correct_rotation(image, rotateCode)
-            if count % self.skip == 0:
+            if count % self.skip == 0 and not self.filter_with_sharpness:
                 frame_path = os.path.join(self.dataset_frames_path, f'{count:05d}.' + self.img_prefix)
                 if self.center_crop:
                     height, width, channels = image.shape
@@ -195,6 +210,14 @@ class OneVideoSceneProcesser:
                     dim = (width, height)
                     image = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
+                image_sharpness = sharpness(image)
+                images_sharpness.append([frame_path, image_sharpness])
+
                 cv2.imwrite(frame_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             success, image = vidcap.read()
             count += 1
+
+        images_sharpness = sorted(images_sharpness, key=lambda x: x[1])
+
+        for el in images_sharpness[:-self.max_len]:
+            os.remove(el[0])

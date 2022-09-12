@@ -131,7 +131,7 @@ def read_re10k_views(views_file_path,
                     translation_scale = scene_meta[use_scale_precentile] / translation_scale
             except yaml.YAMLError as exc:
                 print(exc)
-                
+
     rows = text.split('\n')[1:-1]
     intrinsics = []
     extrinsics = []
