@@ -171,16 +171,13 @@ class OneVideoSceneProcesser:
         videos_stats = get_video_stats(self.video_path)
         self.scene_num_frames = videos_stats['num_frames']
 
-        if self.filter_with_sharpness:
-            self.skip = 1
+        if self.max_len is not None:
+            if self.max_len < self.scene_num_frames:
+                self.skip = math.ceil(self.scene_num_frames / self.max_len)
+        elif skip is not None:
+            self.skip = skip
         else:
-            if self.max_len is not None:
-                if self.max_len < self.scene_num_frames:
-                    self.skip = math.ceil(self.scene_num_frames / self.max_len)
-            elif skip is not None:
-                self.skip = skip
-            else:
-                self.skip = 1
+            self.skip = 1
 
         logger.info(f'Every {self.skip} will be skipped, filter with sharpness {self.filter_with_sharpness}')
 
@@ -195,7 +192,7 @@ class OneVideoSceneProcesser:
         while success:
             if rotateCode is not None:
                 image = correct_rotation(image, rotateCode)
-            if count % self.skip == 0:
+            if count % self.skip == 0 or self.filter_with_sharpness:
                 frame_path = os.path.join(self.dataset_frames_path, f'{count:05d}.' + self.img_prefix)
                 if self.center_crop:
                     height, width, channels = image.shape
@@ -209,13 +206,26 @@ class OneVideoSceneProcesser:
                     image = cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
                 image_sharpness = sharpness(image)
-                images_sharpness.append([frame_path, image_sharpness])
+                images_sharpness.append([count, frame_path, image_sharpness])
 
                 cv2.imwrite(frame_path, image, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
             success, image = vidcap.read()
             count += 1
 
-        images_sharpness = sorted(images_sharpness, key=lambda x: x[1])
+        # images_sharpness = sorted(images_sharpness, key=lambda x: x[1])
+        #
+        # for el in images_sharpness[:-self.max_len]:
+        #     os.remove(el[0])
 
-        for el in images_sharpness[:-self.max_len]:
-            os.remove(el[0])
+        shift = 0
+        while shift < self.scene_num_frames:
+            sub_seq = images_sharpness[shift:shift + self.skip]
+            sub_seq = sorted(sub_seq, key=lambda x: x[2])
+            for el in sub_seq[:-1]:
+                os.remove(el[1])
+            curr_pos = sub_seq[0]
+
+            for el in images_sharpness[shift + self.skip:curr_pos + self.skip]:
+                os.remove(el[1])
+
+            shift = curr_pos + self.skip
