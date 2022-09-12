@@ -174,15 +174,13 @@ class OneVideoSceneProcesser:
         if self.filter_with_sharpness:
             self.skip = 1
         else:
-            if skip is None:
-                if self.max_len is None:
-                    self.skip = 1
-                elif self.max_len < self.scene_num_frames:
+            if self.max_len is not None:
+                if self.max_len < self.scene_num_frames:
                     self.skip = math.ceil(self.scene_num_frames / self.max_len)
-                else:
-                    self.skip = 1
-            else:
+            elif skip is not None:
                 self.skip = skip
+            else:
+                self.skip = 1
 
         logger.info(f'Every {self.skip} will be skipped, filter with sharpness {self.filter_with_sharpness}')
 
