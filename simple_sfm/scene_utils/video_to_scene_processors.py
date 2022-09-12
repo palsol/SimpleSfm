@@ -195,7 +195,7 @@ class OneVideoSceneProcesser:
         while success:
             if rotateCode is not None:
                 image = correct_rotation(image, rotateCode)
-            if count % self.skip == 0 and not self.filter_with_sharpness:
+            if count % self.skip == 0:
                 frame_path = os.path.join(self.dataset_frames_path, f'{count:05d}.' + self.img_prefix)
                 if self.center_crop:
                     height, width, channels = image.shape
