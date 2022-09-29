@@ -135,8 +135,8 @@ class SyncedMultiviewVideoSceneProcesser:
                         else:
                             center_crop = self.center_crop
 
-                        image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
-                                width // 2 - self.enter_crop // 2: width // 2 + self.center_crop // 2]
+                        image = image[height // 2 - center_crop // 2: height // 2 + center_crop // 2,
+                                width // 2 - center_crop // 2: width // 2 + center_crop // 2]
 
                     if self.scale_factor is not None:
                         width = int(image.shape[1] * self.scale_factor)
@@ -206,8 +206,8 @@ class OneVideoSceneProcesser:
                     else:
                         center_crop = self.center_crop
 
-                    image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
-                            width // 2 - self.center_crop // 2: width // 2 + self.center_crop // 2]
+                    image = image[height // 2 - center_crop // 2: height // 2 + center_crop // 2,
+                            width // 2 - center_crop // 2: width // 2 + center_crop // 2]
 
                 if self.scale_factor is not None:
                     width = int(image.shape[1] * self.scale_factor)
