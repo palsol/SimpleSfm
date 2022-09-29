@@ -228,7 +228,7 @@ class OneVideoSceneProcesser:
         #     os.remove(el[0])
 
         shift = 0
-        while shift < self.scene_num_frames:
+        while shift + self.skip < len(images_sharpness):
             sub_seq = images_sharpness[shift:shift + self.skip]
             sub_seq = sorted(sub_seq, key=lambda x: x[2])
             for el in sub_seq[:-1]:
