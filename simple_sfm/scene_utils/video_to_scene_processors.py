@@ -130,6 +130,11 @@ class SyncedMultiviewVideoSceneProcesser:
                     frame_path = os.path.join(times_frame_paths[count], f'{video_name}_{count:09d}.' + self.img_prefix)
                     if self.center_crop:
                         height, width, channels = image.shape
+                        if isinstance(self.center_crop, bool):
+                            center_crop = min(height, width)
+                        else:
+                            center_crop = self.center_crop
+
                         image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
                                 width // 2 - self.enter_crop // 2: width // 2 + self.center_crop // 2]
 
@@ -197,7 +202,10 @@ class OneVideoSceneProcesser:
                 if self.center_crop:
                     height, width, channels = image.shape
                     if isinstance(self.center_crop, bool):
-                        self.center_crop = min(height, width)
+                        center_crop = min(height, width)
+                    else:
+                        center_crop = self.center_crop
+
                     image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
                             width // 2 - self.center_crop // 2: width // 2 + self.center_crop // 2]
 
