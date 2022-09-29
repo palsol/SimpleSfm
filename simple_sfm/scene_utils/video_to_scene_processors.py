@@ -196,6 +196,8 @@ class OneVideoSceneProcesser:
                 frame_path = os.path.join(self.dataset_frames_path, f'{count:05d}.' + self.img_prefix)
                 if self.center_crop:
                     height, width, channels = image.shape
+                    if isinstance(self.center_crop, bool):
+                        self.center_crop = min(height, width)
                     image = image[height // 2 - self.center_crop // 2: height // 2 + self.center_crop // 2,
                             width // 2 - self.center_crop // 2: width // 2 + self.center_crop // 2]
 
