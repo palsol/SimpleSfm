@@ -2,12 +2,14 @@ import os
 import math
 from collections import OrderedDict
 import json
+import yaml
 
 import numpy as np
 import torch
 
-from utils.read_write_colmap_data import qvec2rotmat, read_model, rotmat
-from utils.camera_pinhole import CameraPinhole
+from simple_sfm.utils.geometry import qvec2rotmat, rotmat
+from simple_sfm.scene_utils.read_write_colmap_data import read_model
+from simple_sfm.cameras.camera_pinhole import CameraPinhole
 
 
 def get_info_from_colmap_scene(path_sparse, device='cuda'):
@@ -67,14 +69,14 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     percentiles = [1, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 95, 99]
 
     for el in percentiles:
-        info['p_' + str(el)] = np.percentile(depth_numpy, el)
+        info['p_' + str(el)] = float(np.percentile(depth_numpy, el))
 
     error = np.array([el.error for el in points3D_colmap.values()])
-    info['error_mean'] = error.mean()
-    info['error_std'] = error.std()
+    info['error_mean'] = float(error.mean())
+    info['error_std'] = float(error.std())
 
-    info['num_points'] = len(points3D_colmap)
-    info['num_views'] = len(images_colmap)
+    info['num_points'] = int(len(points3D_colmap))
+    info['num_views'] = int(len(images_colmap))
 
     camera_colmap = cameras_colmap[1]
 
@@ -85,43 +87,43 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     # info['c_x'] = camera_colmap.width / 2
     # info['c_y'] = camera_colmap.height / 2
     if camera_colmap.model == 'PINHOLE':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[0] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[1] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[2] / camera_colmap.height
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
     elif camera_colmap.model == 'SIMPLE_RADIAL':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[0] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[1] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[2] / camera_colmap.height
-        info['k1'] = camera_colmap.params[3]
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[3])
     elif camera_colmap.model == 'RADIAL':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[1] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[2] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[3] / camera_colmap.height
-        info['k1'] = camera_colmap.params[4]
-        info['k1'] = camera_colmap.params[5]
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[4])
+        info['k1'] = float(camera_colmap.params[5])
     elif camera_colmap.model == 'OPENCV':
-        info['f_x'] = camera_colmap.params[0] / camera_colmap.width
-        info['f_y'] = camera_colmap.params[1] / camera_colmap.height
-        info['c_x'] = camera_colmap.params[2] / camera_colmap.width
-        info['c_y'] = camera_colmap.params[3] / camera_colmap.height
-        info['k1'] = camera_colmap.params[4]
-        info['k2'] = camera_colmap.params[5]
-        info['p1'] = camera_colmap.params[6]
-        info['p2'] = camera_colmap.params[7]
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[4])
+        info['k2'] = float(camera_colmap.params[5])
+        info['p1'] = float(camera_colmap.params[6])
+        info['p2'] = float(camera_colmap.params[7])
     else:
         print(f'Camera type is not supported, {camera_colmap}')
         return None
 
-    info['angle_x'] = math.atan(1.0 / (info['f_x'] * 2)) * 2
-    info['angle_y'] = math.atan(1.0 / (info['f_y'] * 2)) * 2
-    info['fov_x'] = info['angle_x'] * 180 / math.pi
-    info['fov_y'] = info['angle_y'] * 180 / math.pi
+    info['angle_x'] = float(math.atan(1.0 / (info['f_x'] * 2)) * 2)
+    info['angle_y'] = float(math.atan(1.0 / (info['f_y'] * 2)) * 2)
+    info['fov_x'] = float(info['angle_x'] * 180 / math.pi)
+    info['fov_y'] = float(info['angle_y'] * 180 / math.pi)
 
-    info['original_resolution_x'] = camera_colmap.width
-    info['original_resolution_y'] = camera_colmap.height
+    info['original_resolution_x'] = int(camera_colmap.width)
+    info['original_resolution_y'] = int(camera_colmap.height)
 
     images_colmap_undistorted = None
 
@@ -132,7 +134,8 @@ def write_view_params_file_re10k_like(
         images_colmap,
         scene_info,
         scene_name,
-        views_output_file_path
+        views_output_file_path,
+        scene_meta_file_output_path=None,
 ):
     """
     Write information about scene views (intrinsics, extrinsics) to RealEstate10K like txt file.
@@ -166,18 +169,23 @@ def write_view_params_file_re10k_like(
         f.write(frame_id + " " + intrinsic_str + " " + extrinsic_str + "\n")
     f.close()
 
+    if scene_meta_file_output_path is not None:
+        with open(os.path.join(scene_meta_file_output_path, 'scene_meta.yaml'), 'w+') as outfile:
+            scene_info['scene_name'] = scene_name
+            yaml.dump(scene_info, outfile, default_flow_style=False)
+
 
 def closest_point_2_lines(oa, da, ob, db):
     """
     returns point closest to both rays of form o+t*d, and a weight factor that goes to 0 if the lines are parallel
     """
-    da = da / np.linalg.norm(da)
-    db = db / np.linalg.norm(db)
-    c = np.cross(da, db)
-    denom = np.linalg.norm(c) ** 2
+    da = da / torch.linalg.norm(da)
+    db = db / torch.linalg.norm(db)
+    c = torch.cross(da, db)
+    denom = torch.linalg.norm(c) ** 2
     t = ob - oa
-    ta = np.linalg.det([t, db, c]) / (denom + 1e-10)
-    tb = np.linalg.det([t, da, c]) / (denom + 1e-10)
+    ta = torch.linalg.det(torch.stack([t, db, c], dim=1)[None]) / (denom + 1e-10)
+    tb = torch.linalg.det(torch.stack([t, da, c], dim=1)[None]) / (denom + 1e-10)
     if ta > 0:
         ta = 0
     if tb > 0:
@@ -300,6 +308,7 @@ def colmap_sparse_to_re10k_like_views(
         views_file_output_path,
         device='cpu',
         scene_name='scene',
+        scene_meta_file_output_path=None,
 ):
     """
     Generate file with views in RE10k style from colmap sparse data.
@@ -308,6 +317,7 @@ def colmap_sparse_to_re10k_like_views(
     :param views_file_output_path: path to dir where views.txt will be stored
     :param device: device for processing
     :param scene_name:
+    :param scene_meta_file_output_path: path to store scene meta yaml
     :return:
     """
     scene_views_file_path = os.path.join(views_file_output_path, 'views.txt')
@@ -317,7 +327,8 @@ def colmap_sparse_to_re10k_like_views(
         images_colmap,
         scene_name=scene_name,
         scene_info=info,
-        views_output_file_path=scene_views_file_path
+        views_output_file_path=scene_views_file_path,
+        scene_meta_file_output_path=scene_meta_file_output_path,
     )
 
 
