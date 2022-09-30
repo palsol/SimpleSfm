@@ -105,24 +105,21 @@ class ColmapBdManager(object):
                    '--Mapper.max_num_models', '1',
                    '--database_path', db_path,
                    '--image_path', images_folder_path,
-                   '--export_path', sparse_path]
+                   '--output_path', sparse_path]
 
         if camera_type is not None and camera_params is not None:
             command.extend(['--Mapper.ba_refine_focal_length', '1',
                             '--Mapper.ba_refine_extra_params', '1',
                             '--Mapper.ba_refine_principal_point', '1'])
-        env = os.environ.copy()
-        subprocess.check_call(command,
-                         # shell=True,
-                         # env=env,
-                         # stdout=subprocess.DEVNULL,
-                         # stderr=subprocess.DEVNULL,
-                         # check=True
-                         )
+
+        subprocess.run(command,
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       check=True)
 
         end = time.time()
         logger.info(f'Finished'
-                    f'Time of mapper {float(end - start)}.')
+                     f'Time of mapper {float(end - start)}.')
 
     @staticmethod
     def triangulation(db_path, images_folder_path, sparse_path, output_path):
@@ -134,24 +131,21 @@ class ColmapBdManager(object):
         logger.info('Starts point triangulator.')
         start = time.time()
 
-        env = os.environ.copy()
-        subprocess.check_call(['colmap', 'point_triangulator',
-                          '--Mapper.init_min_tri_angle', '4',
-                          '--Mapper.init_min_num_inliers', '25',
-                          '--database_path', db_path,
-                          '--image_path', images_folder_path,
-                          '--input_path', sparse_path,
-                          '--output_path', output_path],
-                         # shell=True,
-                         # env=env,
-                         # stdout=subprocess.DEVNULL,
-                         # stderr=subprocess.DEVNULL,
-                         # check=True
-                         )
+        subprocess.run(['colmap', 'point_triangulator',
+                        '--log_level', '1',
+                        '--Mapper.init_min_tri_angle', '4',
+                        '--Mapper.init_min_num_inliers', '25',
+                        '--database_path', db_path,
+                        '--image_path', images_folder_path,
+                        '--input_path', sparse_path,
+                        '--output_path', output_path],
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       check=True)
 
         end = time.time()
         logger.info(f'Finished'
-                    f'Time of triangulation {float(end - start)}.')
+                     f'Time of triangulation {float(end - start)}.')
 
     @staticmethod
     def dense(images_folder_path, sparse_path, output_path, size):
@@ -159,48 +153,40 @@ class ColmapBdManager(object):
         logger.info('Starts image_undistorter.')
         start = time.time()
 
-        env = os.environ.copy()
-        subprocess.check_call(['colmap',
-                          'image_undistorter',
-                          '--image_path', images_folder_path,
-                          '--input_path', sparse_path,
-                          '--output_path', output_path,
-                          '--output_type', 'COLMAP',
-                          '--min_scale', str(0.9),
-                          '--max_image_size', str(size),
-                          ],
-                         # shell=True,
-                         # env=env,
-                         # stdout=subprocess.DEVNULL,
-                         # stderr=subprocess.DEVNULL,
-                         # check=True
-                         )
+        subprocess.run(['colmap',
+                        'image_undistorter',
+                        '--image_path', images_folder_path,
+                        '--input_path', sparse_path,
+                        '--output_path', output_path,
+                        '--output_type', 'COLMAP',
+                        '--min_scale', str(0.9),
+                        '--max_image_size', str(size),
+                        ],
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       check=True)
 
         end = time.time()
         logger.info(f'Finished'
-                    f'Time of image_undistorter {float(end - start)}.')
+                     f'Time of image_undistorter {float(end - start)}.')
 
         logger.info('Starts patch_match_stereo.')
         start = time.time()
 
-        env = os.environ.copy()
-        subprocess.check_call([
+        subprocess.run([
             'colmap',
             'patch_match_stereo',
             '--workspace_path', output_path,
             '--workspace_format', 'COLMAP',
             '--PatchMatchStereo.geom_consistency', 'true',
         ],
-            # shell=True,
-            # env=env,
-            # stdout=subprocess.DEVNULL,
-            # stderr=subprocess.DEVNULL,
-            # check=True
-        )
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=True)
 
         end = time.time()
         logger.info(f'Finished'
-                    f'Time of patch_match_stereo {float(end - start)}.')
+                     f'Time of patch_match_stereo {float(end - start)}.')
 
     @staticmethod
     def generate_ply(output_path, dense_path):
@@ -208,24 +194,20 @@ class ColmapBdManager(object):
         logger.info('Starts stereo_fusion.')
         start = time.time()
 
-        env = os.environ.copy()
-        subprocess.check_call(['colmap',
-                          'stereo_fusion',
-                          '--workspace_path', dense_path,
-                          '--workspace_format', 'COLMAP',
-                          '--input_type', 'geometric',
-                          '--output_path', output_path,
-                          ],
-                         # shell=True,
-                         # env=env,
-                         # stdout=subprocess.DEVNULL,
-                         # stderr=subprocess.DEVNULL,
-                         # check=True
-                         )
+        subprocess.run(['colmap',
+                        'stereo_fusion',
+                        '--workspace_path', dense_path,
+                        '--workspace_format', 'COLMAP',
+                        '--input_type', 'geometric',
+                        '--output_path', output_path,
+                        ],
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       check=True)
 
         end = time.time()
         logger.info(f'Finished'
-                    f'Time of stereo_fusion {float(end - start)}.')
+                     f'Time of stereo_fusion {float(end - start)}.')
 
     def __create_images_file(self, poses):
         self.cursor.execute('SELECT * FROM images')
@@ -274,7 +256,7 @@ class ColmapBdManager(object):
         # TODO  Implement creating database without calling feature_extractor command.
 
         command = ['colmap', 'feature_extractor',
-                   '--SiftExtraction.use_gpu', '0',
+                   '--log_level', '0',
                    '--ImageReader.single_camera', '1',
                    '--ImageReader.default_focal_length_factor', '0.85',
                    '--SiftExtraction.peak_threshold', '0.02',
@@ -286,14 +268,10 @@ class ColmapBdManager(object):
             command.extend(['--ImageReader.camera_model', self.camera_type,
                             '--ImageReader.camera_params', str(self.camera_params)[1:-1].replace(' ', '')])
 
-        env = os.environ.copy()
-        subprocess.check_call(command,
-                         # shell=True,
-                         # env=env,
-                         # stdout=subprocess.DEVNULL,
-                         # stderr=subprocess.DEVNULL,
-                         # check=True
-                         )
+        subprocess.run(command,
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL,
+                       check=True)
 
     def build_initial_folder_from_known_camera_parameters(self,
                                                           poses: Dict,
@@ -394,22 +372,17 @@ class ColmapBdManager(object):
         match_txt_path = os.path.join(self.db_dir, 'match.txt')
         np.savetxt(match_txt_path, match_table_txt, fmt="%s", delimiter=' ')
 
-        env = os.environ.copy()
-        command = ['colmap', 'matches_importer',
-                   '--SiftMatching.use_gpu', '0',
-                   '--database_path', self.db_path,
-                   '--match_list_path', match_txt_path,
-                   '--match_type', 'pairs']
-        subprocess.check_call(command,
-                         # shell=True,
-                         # env=env,
-                         # stdout=subprocess.DEVNULL,
-                         # stderr=subprocess.DEVNULL
-                         )
+        subprocess.run(['colmap', 'matches_importer',
+                        '--database_path', self.db_path,
+                        '--match_list_path', match_txt_path,
+                        '--match_type', 'pairs'],
+                       stdout=subprocess.DEVNULL,
+                       stderr=subprocess.DEVNULL
+                       )
 
         end = time.time()
         logger.info(f'Finished \n'
-                    f'Elapsed time: {float(end - start)} \n')
+                     f'Elapsed time: {float(end - start)} \n')
 
     def run_mapper(self):
         self.mapper(self.db_path, self.images_folder_path, self.sparse_path, self.camera_type, self.camera_params)
