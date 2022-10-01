@@ -193,7 +193,8 @@ class OneVideoSceneProcesser:
     def run(self):
 
         vidcap = cv2.VideoCapture(self.video_path)
-        rotateCode = check_rotation(self.video_path)
+        rotateCode = None
+        # rotateCode = check_rotation(self.video_path)
         #         print(rotateCode)
         if self.force_rotate_code is not None:
             rotateCode = self.force_rotate_code
