@@ -48,7 +48,6 @@ def get_video_stats(video_path):
     vidcap = cv2.VideoCapture(video_path)
     rotateCode = check_rotation(video_path)
     num_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-
     return {
         'rotation': rotateCode,
         'num_frames': num_frames
@@ -103,6 +102,7 @@ class SyncedMultiviewVideoSceneProcesser:
                 self.skip = 1
             elif self.max_len < self.scene_num_frames:
                 self.skip = math.ceil(self.scene_num_frames / self.max_len)
+
             else:
                 self.skip = 1
         else:
@@ -159,6 +159,7 @@ class OneVideoSceneProcesser:
                  scale_factor=None,
                  img_prefix='jpg',
                  filter_with_sharpness=False,
+                 force_rotate_code=False,
                  ):
 
         self.video_path = video_path
@@ -169,6 +170,7 @@ class OneVideoSceneProcesser:
         self.scale_factor = scale_factor
         self.img_prefix = img_prefix
         self.filter_with_sharpness = filter_with_sharpness
+        self.force_rotate_code = force_rotate_code
 
         os.makedirs(self.dataset_output_path, exist_ok=True)
         os.makedirs(self.dataset_frames_path, exist_ok=True)
@@ -179,6 +181,8 @@ class OneVideoSceneProcesser:
         if self.max_len is not None:
             if self.max_len < self.scene_num_frames:
                 self.skip = math.ceil(self.scene_num_frames / self.max_len)
+            else:
+                self.skip = 1
         elif skip is not None:
             self.skip = skip
         else:
@@ -190,6 +194,9 @@ class OneVideoSceneProcesser:
 
         vidcap = cv2.VideoCapture(self.video_path)
         rotateCode = check_rotation(self.video_path)
+        #         print(rotateCode)
+        if self.force_rotate_code is not None:
+            rotateCode = self.force_rotate_code
 
         success, image = vidcap.read()
         images_sharpness = []
