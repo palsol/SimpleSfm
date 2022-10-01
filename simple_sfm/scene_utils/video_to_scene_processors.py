@@ -159,7 +159,7 @@ class OneVideoSceneProcesser:
                  scale_factor=None,
                  img_prefix='jpg',
                  filter_with_sharpness=False,
-                 force_rotate_code=False,
+                 force_rotate_code=None,
                  ):
 
         self.video_path = video_path
