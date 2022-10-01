@@ -194,8 +194,6 @@ class OneVideoSceneProcesser:
 
         vidcap = cv2.VideoCapture(self.video_path)
         rotateCode = None
-        # rotateCode = check_rotation(self.video_path)
-        #         print(rotateCode)
         if self.force_rotate_code is not None:
             rotateCode = self.force_rotate_code
 
@@ -230,20 +228,20 @@ class OneVideoSceneProcesser:
             success, image = vidcap.read()
             count += 1
 
-        # images_sharpness = sorted(images_sharpness, key=lambda x: x[1])
-        #
-        # for el in images_sharpness[:-self.max_len]:
-        #     os.remove(el[0])
+        if self.filter_with_sharpness:
+            shift = 0
+            while shift + self.skip < len(images_sharpness):
+                sub_seq = images_sharpness[shift:shift + self.skip]
+                sub_seq = sorted(sub_seq, key=lambda x: x[2])
+                for el in sub_seq[:-1]:
+                    os.remove(el[1])
+                curr_pos = sub_seq[-1][0]
 
-        shift = 0
-        while shift + self.skip < len(images_sharpness):
-            sub_seq = images_sharpness[shift:shift + self.skip]
-            sub_seq = sorted(sub_seq, key=lambda x: x[2])
-            for el in sub_seq[:-1]:
-                os.remove(el[1])
-            curr_pos = sub_seq[-1][0]
+                for el in images_sharpness[shift + self.skip:curr_pos + self.skip]:
+                    os.remove(el[1])
 
-            for el in images_sharpness[shift + self.skip:curr_pos + self.skip]:
-                os.remove(el[1])
+                shift = curr_pos + self.skip
 
-            shift = curr_pos + self.skip
+            while shift < len(images_sharpness):
+                os.remove(images_sharpness[shift][1])
+                shift += 1
