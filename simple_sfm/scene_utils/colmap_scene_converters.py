@@ -136,6 +136,7 @@ def write_view_params_file_re10k_like(
         scene_name,
         views_output_file_path,
         scene_meta_file_output_path=None,
+        permute_axis=[0, 1, 2],
 ):
     """
     Write information about scene views (intrinsics, extrinsics) to RealEstate10K like txt file.
@@ -158,7 +159,7 @@ def write_view_params_file_re10k_like(
     images = {k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)}
     for item in images.items():
         rotation = qvec2rotmat(item[1].qvec)
-        extrinsic = np.append(rotation, item[1].tvec[..., np.newaxis], axis=1)
+        extrinsic = np.append(rotation[permute_axis], item[1].tvec[permute_axis][..., np.newaxis], axis=1)
         extrinsic_str = np.array2string(extrinsic.flatten(),
                                         precision=3,
                                         separator=' ',
@@ -309,6 +310,7 @@ def colmap_sparse_to_re10k_like_views(
         device='cpu',
         scene_name='scene',
         scene_meta_file_output_path=None,
+        permute_axis=[0, 1, 2],
 ):
     """
     Generate file with views in RE10k style from colmap sparse data.
@@ -329,6 +331,7 @@ def colmap_sparse_to_re10k_like_views(
         scene_info=info,
         views_output_file_path=scene_views_file_path,
         scene_meta_file_output_path=scene_meta_file_output_path,
+        permute_axis=permute_axis,
     )
 
 
