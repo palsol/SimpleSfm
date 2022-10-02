@@ -16,7 +16,7 @@ class VideoStreamer(object):
       A video file, such as an .mp4 or .avi file.
     """
 
-    def __init__(self, basedir, height, width, skip=None, max_len=100, img_glob='*.jpg'):
+    def __init__(self, basedir, height, width, skip=None, max_len=100, img_glob='*.jpg', gray_scale=True):
         self.cap = []
         self.camera = False
         self.video_file = False
@@ -24,6 +24,7 @@ class VideoStreamer(object):
         self.sizer = [height, width]
         self.i = 0
         self.max_len = None
+        self.gray_scale = gray_scale
 
         if skip is not None:
             self.skip = skip
@@ -77,22 +78,26 @@ class VideoStreamer(object):
         return width, height
 
     def read_image(self, impath, img_size):
-        """ Read image as grayscale and resize to img_size.
+        """ Read image and resize to img_size.
         Inputs
           impath: Path to input image.
           img_size: (W, H) tuple specifying resize size.
         Returns
           grayim: float32 numpy array sized H x W with values in range [0, 1].
         """
-        grayim = cv2.imread(impath, 0)
-        if grayim is None:
+        if self.gray_scale:
+            image = cv2.imread(impath, 0)
+        else:
+            image = cv2.imread(impath)
+
+        if image is None:
             raise Exception('Error reading image %s' % impath)
         # Image is resized via opencv.
         interp = cv2.INTER_AREA
         if img_size[0] is not None and img_size[1] is not None:
-            grayim = cv2.resize(grayim, (img_size[1], img_size[0]), interpolation=interp)
-        grayim = (grayim.astype('float32') / 255.)
-        return grayim
+            image = cv2.resize(image, (img_size[1], img_size[0]), interpolation=interp)
+        image = (image.astype('float32') / 255.)
+        return image
 
     def next_frame(self):
         """ Return the next frame, and increment internal counter.
