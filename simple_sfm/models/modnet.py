@@ -83,7 +83,7 @@ class MODNETModel:
 
         # resize image for input
         old_im_h, old_im_w = im.shape[-2:]
-        new_size = utils.get_image_size_near_ref_size(im.shape[-2:], ref_size=ref_size, divisor=32)
+        new_size = utils.image.get_image_size_near_ref_size(im.shape[-2:], ref_size=ref_size, divisor=32)
         im = F.interpolate(im, size=(new_size[0], new_size[1]), mode='area')
 
         # inference
