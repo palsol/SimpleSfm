@@ -45,7 +45,7 @@ class MODNETModel:
 
         with torch.no_grad():
             old_im_h, old_im_w = image_tensor.shape[-2:]
-            new_size = utils.get_image_size_near_ref_size([old_im_h, old_im_w], ref_size=ref_size, divisor=32)
+            new_size = utils.image.get_image_size_near_ref_size([old_im_h, old_im_w], ref_size=ref_size, divisor=32)
             image_resized_tensor = F.interpolate(image_tensor, size=(new_size[0], new_size[1]), mode='area')
             matte = self.modnet(image_resized_tensor.cuda())
             matte = F.interpolate(matte, size=(old_im_h, old_im_w), mode='area')
