@@ -5,7 +5,8 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms as transforms
 from PIL import Image
-from simple_sfm import utils
+from simple_sfm.utils import image
+from simple_sfm.utils import common
 from tqdm import tqdm
 
 
@@ -45,7 +46,7 @@ class MODNETModel:
 
         with torch.no_grad():
             old_im_h, old_im_w = image_tensor.shape[-2:]
-            new_size = utils.image.get_image_size_near_ref_size([old_im_h, old_im_w], ref_size=ref_size, divisor=32)
+            new_size = image.get_image_size_near_ref_size([old_im_h, old_im_w], ref_size=ref_size, divisor=32)
             image_resized_tensor = F.interpolate(image_tensor, size=(new_size[0], new_size[1]), mode='area')
             matte = self.modnet(image_resized_tensor.cuda())
             matte = F.interpolate(matte, size=(old_im_h, old_im_w), mode='area')
@@ -59,7 +60,7 @@ class MODNETModel:
         # inference
         with torch.no_grad():
             matte_batch = []
-            for start, end in tqdm(utils.chunker(len(images_tensors), self.batch_size)):
+            for start, end in tqdm(common.chunker(len(images_tensors), self.batch_size)):
                 matte = self.modnet(images_tensors[start:end] - 0.5)
                 matte_batch.append(matte)
 
@@ -83,7 +84,7 @@ class MODNETModel:
 
         # resize image for input
         old_im_h, old_im_w = im.shape[-2:]
-        new_size = utils.image.get_image_size_near_ref_size(im.shape[-2:], ref_size=ref_size, divisor=32)
+        new_size = image.get_image_size_near_ref_size(im.shape[-2:], ref_size=ref_size, divisor=32)
         im = F.interpolate(im, size=(new_size[0], new_size[1]), mode='area')
 
         # inference
