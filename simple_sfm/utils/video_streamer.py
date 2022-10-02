@@ -16,7 +16,7 @@ class VideoStreamer(object):
       A video file, such as an .mp4 or .avi file.
     """
 
-    def __init__(self, basedir, height, width, skip=None, max_len=100, img_glob='*.jpg', gray_scale=True):
+    def __init__(self, basedir, height, width, skip=None, max_len=100, img_glob='*.jpg', grayscale=True):
         self.cap = []
         self.camera = False
         self.video_file = False
@@ -24,7 +24,7 @@ class VideoStreamer(object):
         self.sizer = [height, width]
         self.i = 0
         self.max_len = None
-        self.gray_scale = gray_scale
+        self.grayscale = grayscale
 
         if skip is not None:
             self.skip = skip
@@ -85,7 +85,7 @@ class VideoStreamer(object):
         Returns
           grayim: float32 numpy array sized H x W with values in range [0, 1].
         """
-        if self.gray_scale:
+        if self.grayscale:
             image = cv2.imread(impath, 0)
         else:
             image = cv2.imread(impath)
