@@ -87,8 +87,10 @@ class VideoStreamer(object):
         """
         if self.grayscale:
             image = cv2.imread(impath, 0)
+
         else:
             image = cv2.imread(impath)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         if image is None:
             raise Exception('Error reading image %s' % impath)

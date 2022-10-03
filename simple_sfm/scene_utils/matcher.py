@@ -125,8 +125,10 @@ class Matcher(object):
             match_table[(image_id_1, image_id_2)] = matches
         return match_table
 
-    def match_video_stream(self, vs: VideoStreamer,
-                           match_pairs_filter: callable = None) -> Tuple[List[Frame],
+    def match_video_stream(self,
+                           vs: VideoStreamer,
+                           match_pairs_filter: callable = None,
+                           vs_mask: VideoStreamer = None) -> Tuple[List[Frame],
                                                                            Dict[Tuple[int, int], np.array],
                                                                            Dict[int, str]]:
         """
@@ -135,6 +137,7 @@ class Matcher(object):
         :param match_pairs_filter: Condition for filtering pairs, if you want all pairs set None.
                                    For example, lambda x : np.abs(x[0] -x[1]) % 2 == 0,
                                    filter all match pairs which have even distance between each other.
+        :param vs_mask: VideoStreamer: video streamer that provides mask for images
         :return: processed_frames - List of Frame,
                  match_table - Dict where the key is a pair from the match_list,
                  and the value is the points that match between images in pair.
@@ -155,12 +158,21 @@ class Matcher(object):
         num_keypoints = 0
         while True:
             image, status, img_path = vs.next_frame()
+            if vs_mask is not None:
+                image_mask, status_mask, img_mask_path = vs_mask.next_frame()
+                status &= status_mask
+
             if status is False:
                 break
 
             with torch.no_grad():
                 image = torch.from_numpy(image)[None, None, :, :].cuda()
-                result = self.super_point_extractor({'image': image})
+                data = {'image': image}
+                if vs_mask:
+                    image_mask = torch.from_numpy(image_mask > 0)[None, None, :, :].cuda()
+                    data['mask'] = image_mask
+
+                result = self.super_point_extractor(data)
 
             keypoints_pos = result['keypoints']
             descriptors = result['descriptors']
