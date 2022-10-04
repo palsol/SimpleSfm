@@ -125,12 +125,117 @@ class Matcher(object):
             match_table[(image_id_1, image_id_2)] = matches
         return match_table
 
+    def match_frames(self,
+                     frames: List[Frame],
+                     images_names: dict,
+                     match_pairs_filter: callable = None) -> Tuple[List[Frame],
+                                                                   Dict[Tuple[int, int], np.array],
+                                                                   Dict[int, str]]:
+
+        logger.info('Starts matching descriptors.')
+        start = time.time()
+
+        match_list = np.array(list(itertools.combinations(images_names.keys(), r=2)))
+        match_list = np.array(list(filter(match_pairs_filter, match_list)))
+
+        match_table = None
+
+        if self.matcher_type == 'simple':
+            match_table = self.__simple_matcher(frames, match_list)
+        elif self.matcher_type == 'super_glue':
+            match_table = self.__super_glue_matcher(frames, match_list)
+
+        num_matched_points = 0
+        for keys, value in match_table.items():
+            num_matched_points += len(value)
+
+        end = time.time()
+        logger.info(f'Finished \n'
+                    f'Elapsed time: {float(end - start)} \n'
+                    f'Num matches: {len(match_list)} \n'
+                    f'Num matched points: {num_matched_points} \n')
+
+        torch.cuda.empty_cache()
+
+        return frames, match_table, images_names
+
+    def match_dataset(self,
+                      dataset: ImageFolders,
+                      match_pairs_filter: callable = None) -> Tuple[List[Frame],
+                                                                    Dict[Tuple[int, int], np.array],
+                                                                    Dict[int, str]]:
+        """
+        Get ImageFolders dataset and processed all frames from it, image folders type must be set as 'rgb' and 'mask'(if masks are used).
+        :param dataset: ImageFolders
+        :param match_pairs_filter: Condition for filtering pairs, if you want all pairs set None.
+                                   For example, lambda x : np.abs(x[0] -x[1]) % 2 == 0,
+                                   filter all match pairs which have even distance between each other.
+        :return: processed_frames - List of Frame,
+                 match_table - Dict where the key is a pair from the match_list,
+                 and the value is the points that match between images in pair.
+                 images_names - Dict where the key is a index of image and the value is the name of image.
+        """
+
+        if match_pairs_filter is None:
+            match_pairs_filter = lambda x: True
+
+        logger.info('Starts extracting descriptors.')
+        start = time.time()
+        image_bd_index = 1
+
+        images_bd_ids = {}
+        images_bd_index_names = {}
+        processed_frames = []
+
+        num_keypoints = 0
+
+        image_dataloader = DataLoader(image_dataset, batch_size=1)
+
+        for data in image_dataloader:
+
+            images = data['rgb'].cuda()
+            images_names = data['image_name']
+
+            masks = None
+            if 'mask' in data:
+                masks = data['mask'].cuda()
+
+            with torch.no_grad():
+                data = {'image': images}
+                if masks is not None:
+                    data['mask'] = masks > 0
+
+                result = self.super_point_extractor(data)
+
+            keypoints_pos = result['keypoints']
+            descriptors = result['descriptors']
+            scores = result['scores']
+
+            processed_frames.append(Frame(descriptors,
+                                          keypoints_pos,
+                                          scores,
+                                          images[0]))
+
+            images_bd_index_names[image_bd_index] = images_names
+
+            image_bd_index += 1
+            num_keypoints += len(keypoints_pos)
+
+        end = time.time()
+
+        logger.info(f'Finished \n '
+                    f'Elapsed time: {float(end - start)} \n'
+                    f'Num images: {len(processed_frames)} \n'
+                    f'Num keypoints: {num_keypoints} \n')
+
+        return self.match_frames(processed_frames, images_bd_index_names, match_pairs_filter)
+
     def match_video_stream(self,
                            vs: VideoStreamer,
                            match_pairs_filter: callable = None,
                            vs_mask: VideoStreamer = None) -> Tuple[List[Frame],
-                                                                           Dict[Tuple[int, int], np.array],
-                                                                           Dict[int, str]]:
+                                                                   Dict[Tuple[int, int], np.array],
+                                                                   Dict[int, str]]:
         """
         Get VideoStreamer and processed all frames from it,.
         :param vs: VideoStreamer
@@ -152,7 +257,7 @@ class Matcher(object):
         image_bd_index = 1
 
         images_bd_ids = {}
-        images_names = {}
+        images_bd_index_names = {}
         processed_frames = []
 
         num_keypoints = 0
@@ -185,7 +290,7 @@ class Matcher(object):
 
             image_name = img_path.split('/')[-1]
             images_bd_ids[image_name] = image_bd_index
-            images_names[image_bd_index] = image_name
+            images_bd_index_names[image_bd_index] = image_name
 
             image_bd_index += 1
             num_keypoints += len(keypoints_pos)
@@ -193,33 +298,8 @@ class Matcher(object):
         end = time.time()
 
         logger.info(f'Finished \n '
-                     f'Elapsed time: {float(end - start)} \n'
-                     f'Num images: {len(processed_frames)} \n'
-                     f'Num keypoints: {num_keypoints} \n')
+                    f'Elapsed time: {float(end - start)} \n'
+                    f'Num images: {len(processed_frames)} \n'
+                    f'Num keypoints: {num_keypoints} \n')
 
-        logger.info('Starts matching descriptors.')
-        start = time.time()
-
-        match_list = np.array(list(itertools.combinations(images_names.keys(), r=2)))
-        match_list = np.array(list(filter(match_pairs_filter, match_list)))
-
-        match_table = None
-
-        if self.matcher_type == 'simple':
-            match_table = self.__simple_matcher(processed_frames, match_list)
-        elif self.matcher_type == 'super_glue':
-            match_table = self.__super_glue_matcher(processed_frames, match_list)
-
-        num_matched_points = 0
-        for keys, value in match_table.items():
-            num_matched_points += len(value)
-
-        end = time.time()
-        logger.info(f'Finished \n'
-                     f'Elapsed time: {float(end - start)} \n'
-                     f'Num matches: {len(match_list)} \n'
-                     f'Num matched points: {num_matched_points} \n')
-
-        torch.cuda.empty_cache()
-
-        return processed_frames, match_table, images_names
+        return self.match_frames(processed_frames, images_bd_index_names, match_pairs_filter)
