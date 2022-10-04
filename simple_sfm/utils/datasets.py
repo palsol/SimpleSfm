@@ -17,6 +17,7 @@ class ImageFoldersDataset(Dataset):
     def __init__(self,
                  folders_dict: dict,
                  transforms_dict: dict,
+                 image_name_path_shift: int = 1,
                  ):
         """
         Dataset which allows to load corresponding images from different folders to same item.
@@ -29,6 +30,8 @@ class ImageFoldersDataset(Dataset):
             dict of different types of images for each images
         """
         super().__init__()
+        if image_name_path_shift < 1:
+            image_name_path_shift = 1
 
         self.transforms = transforms_dict
 
@@ -39,7 +42,7 @@ class ImageFoldersDataset(Dataset):
         self.images_meta_dict = dict()
         images_names = None
         for key, images_paths in images_paths_dict.items():
-            images_names_curr = [(el.split('/')[-1].split('.')[0], el) for el in images_paths]
+            images_names_curr = [('_'.join(el.split('/')[-image_name_path_shift:]).split('.')[0], el) for el in images_paths]
             sorted(images_names_curr, key=lambda x: x[0])
 
             if images_names is None:
