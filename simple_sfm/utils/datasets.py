@@ -83,5 +83,5 @@ class ImageFoldersDataset(Dataset):
             except OSError as e:
                 logger.error(f'Possibly, image file is broken: {image_path}')
                 raise e
-            image_data['path'] = image_path
+            image_data['path_' + str(image_type)] = image_path
         return image_data
