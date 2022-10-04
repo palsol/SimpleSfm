@@ -163,7 +163,8 @@ class Matcher(object):
 
     def match_datasets(self,
                       datasets: Union[ImageFoldersDataset, List[ImageFoldersDataset]],
-                      match_pairs_filter: callable = None) -> Tuple[List[Frame],
+                      match_pairs_filter: callable = None,
+                      image_name_path_shift: int = 1) -> Tuple[List[Frame],
                                                                     Dict[Tuple[int, int], np.array],
                                                                     Dict[int, str],
                                                                     List[int]]:
@@ -189,7 +190,6 @@ class Matcher(object):
         start = time.time()
         image_bd_index = 1
 
-        images_bd_ids = {}
         images_bd_index_names = {}
         processed_frames = []
 
@@ -205,7 +205,7 @@ class Matcher(object):
             for data in image_dataloader:
 
                 images = data['rgb'].cuda()
-                images_names = data['image_name']
+                images_names = [('_'.join(el.split('/')[-image_name_path_shift:]).split('.')[0], el) for el in data['path']]
 
                 masks = None
                 if 'mask' in data:

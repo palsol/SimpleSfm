@@ -17,7 +17,6 @@ class ImageFoldersDataset(Dataset):
     def __init__(self,
                  folders_dict: dict,
                  transforms_dict: dict,
-                 image_name_path_shift: int = 1,
                  ):
         """
         Dataset which allows to load corresponding images from different folders to same item.
@@ -30,8 +29,7 @@ class ImageFoldersDataset(Dataset):
             dict of different types of images for each images
         """
         super().__init__()
-        if image_name_path_shift < 1:
-            image_name_path_shift = 1
+        image_name_path_shift = 1
 
         self.transforms = transforms_dict
 
@@ -85,5 +83,5 @@ class ImageFoldersDataset(Dataset):
             except OSError as e:
                 logger.error(f'Possibly, image file is broken: {image_path}')
                 raise e
-
+            image_data['path'] = image_path
         return image_data
