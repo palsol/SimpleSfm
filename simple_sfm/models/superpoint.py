@@ -131,7 +131,7 @@ class SuperPoint(nn.Module):
         scores = simple_nms(scores, self.nms_radius)
 
         if 'mask' in data:
-            scores[data['mask'][0]] = 0
+            scores[~data['mask'][0]] = 0
 
         # Extract keypoints
         keypoints = [
