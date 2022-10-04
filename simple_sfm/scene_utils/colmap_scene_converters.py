@@ -199,6 +199,7 @@ def write_view_params_file_nerf_like(
         scene_info,
         work_dir,
         relative_frames_path,
+        up_vec=None,
 ):
     """
     Write information about scene views (intrinsics, extrinsics) to RealEstate10K like txt file.
@@ -243,6 +244,8 @@ def write_view_params_file_nerf_like(
 
     N = len(frames)
     up = up / np.linalg.norm(up)
+    if up_vec is not None:
+        up = up_vec
 
     print("[INFO] up vector was", up)
 
@@ -302,6 +305,8 @@ def write_view_params_file_nerf_like(
     print(f"[INFO] writing {len(frames)} frames to {output_path}")
     with open(output_path, "w") as outfile:
         json.dump(out, outfile, indent=2)
+
+    return up
 
 
 def colmap_sparse_to_re10k_like_views(
