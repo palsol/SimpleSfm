@@ -1,4 +1,4 @@
-__all__ = ['ImageFolders']
+__all__ = ['ImageFoldersDataset']
 
 import logging
 import os
@@ -13,7 +13,7 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 logger = logging.getLogger(__name__)
 
 
-class ImageFolders(Dataset):
+class ImageFoldersDataset(Dataset):
     def __init__(self,
                  folders_dict: dict,
                  transforms_dict: dict,

@@ -3,7 +3,7 @@ __all__ = ['Matcher']
 import itertools
 import logging
 import time
-from typing import NamedTuple, Dict, Tuple, List
+from typing import NamedTuple, Dict, Tuple, List, Union
 
 import numpy as np
 import torch
@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader
 from simple_sfm.models.superglue import SuperGlue
 from simple_sfm.models.superpoint import SuperPoint
 from simple_sfm.utils.video_streamer import VideoStreamer
-from simple_sfm.utils.datasets import ImageFolders
+from simple_sfm.utils.datasets import ImageFoldersDataset
 from simple_sfm.scene_utils.simple_matcher import SimpleMatcher
 
 logger = logging.getLogger(__name__)
@@ -161,14 +161,17 @@ class Matcher(object):
 
         return frames, match_table, images_names
 
-    def match_dataset(self,
-                      dataset: ImageFolders,
+    def match_datasets(self,
+                      datasets: Union[ImageFoldersDataset, List[ImageFoldersDataset]],
                       match_pairs_filter: callable = None) -> Tuple[List[Frame],
                                                                     Dict[Tuple[int, int], np.array],
-                                                                    Dict[int, str]]:
+                                                                    Dict[int, str],
+                                                                    List[int]]:
         """
-        Get ImageFolders dataset and processed all frames from it, image folders type must be set as 'rgb' and 'mask'(if masks are used).
-        :param dataset: ImageFolders
+        Get ImageFoldersDataset dataset or list of ImageFoldersDatasets and processed all frames from it,
+        image folders type must be set as 'rgb' and 'mask'(if masks are used).
+
+        :param datasets: ImageFoldersDataset or list of ImageFoldersDataset
         :param match_pairs_filter: Condition for filtering pairs, if you want all pairs set None.
                                    For example, lambda x : np.abs(x[0] -x[1]) % 2 == 0,
                                    filter all match pairs which have even distance between each other.
@@ -176,6 +179,7 @@ class Matcher(object):
                  match_table - Dict where the key is a pair from the match_list,
                  and the value is the points that match between images in pair.
                  images_names - Dict where the key is a index of image and the value is the name of image.
+                 dataset_split_bd_index - border index between frames from different datasets
         """
 
         if match_pairs_filter is None:
@@ -191,37 +195,44 @@ class Matcher(object):
 
         num_keypoints = 0
 
-        image_dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
+        if ~isinstance(datasets, List):
+            datasets = [datasets]
 
-        for data in image_dataloader:
+        dataset_split_bd_index = []
+        for dataset in datasets:
+            image_dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
-            images = data['rgb'].cuda()
-            images_names = data['image_name']
+            for data in image_dataloader:
 
-            masks = None
-            if 'mask' in data:
-                masks = data['mask'].cuda()
+                images = data['rgb'].cuda()
+                images_names = data['image_name']
 
-            with torch.no_grad():
-                data = {'image': images}
-                if masks is not None:
-                    data['mask'] = masks > 0
+                masks = None
+                if 'mask' in data:
+                    masks = data['mask'].cuda()
 
-                result = self.super_point_extractor(data)
+                with torch.no_grad():
+                    data = {'image': images}
+                    if masks is not None:
+                        data['mask'] = masks > 0
 
-            keypoints_pos = result['keypoints']
-            descriptors = result['descriptors']
-            scores = result['scores']
+                    result = self.super_point_extractor(data)
 
-            processed_frames.append(Frame(descriptors,
-                                          keypoints_pos,
-                                          scores,
-                                          images[0]))
+                keypoints_pos = result['keypoints']
+                descriptors = result['descriptors']
+                scores = result['scores']
 
-            images_bd_index_names[image_bd_index] = images_names
+                processed_frames.append(Frame(descriptors,
+                                              keypoints_pos,
+                                              scores,
+                                              images[0]))
 
-            image_bd_index += 1
-            num_keypoints += len(keypoints_pos)
+                images_bd_index_names[image_bd_index] = images_names
+
+                image_bd_index += 1
+                num_keypoints += len(keypoints_pos)
+
+            dataset_split_bd_index.append(image_bd_index)
 
         end = time.time()
 
@@ -230,7 +241,7 @@ class Matcher(object):
                     f'Num images: {len(processed_frames)} \n'
                     f'Num keypoints: {num_keypoints} \n')
 
-        return self.match_frames(processed_frames, images_bd_index_names, match_pairs_filter)
+        return *self.match_frames(processed_frames, images_bd_index_names, match_pairs_filter), dataset_split_bd_index
 
     def match_video_stream(self,
                            vs: VideoStreamer,
