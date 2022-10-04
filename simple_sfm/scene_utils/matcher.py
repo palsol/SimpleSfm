@@ -191,7 +191,7 @@ class Matcher(object):
 
         num_keypoints = 0
 
-        image_dataloader = DataLoader(dataset, batch_size=1)
+        image_dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
 
         for data in image_dataloader:
 
