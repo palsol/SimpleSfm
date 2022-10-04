@@ -195,7 +195,7 @@ class Matcher(object):
 
         num_keypoints = 0
 
-        if ~isinstance(datasets, List):
+        if not isinstance(datasets, list):
             datasets = [datasets]
 
         dataset_split_bd_index = []
