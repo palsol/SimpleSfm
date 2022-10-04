@@ -205,7 +205,7 @@ class Matcher(object):
             for data in image_dataloader:
 
                 images = data['rgb'].cuda()
-                images_names = ['_'.join(el.split('/')[-image_name_path_shift:]).split('.')[0] for el in data['path_rgb']]
+                images_names = '_'.join(data['path_rgb'][0].split('/')[-image_name_path_shift:])
 
                 masks = None
                 if 'mask' in data:
