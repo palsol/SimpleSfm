@@ -7,6 +7,7 @@ from typing import NamedTuple, Dict, Tuple, List
 
 import numpy as np
 import torch
+from torch.utils.data import DataLoader
 
 from simple_sfm.models.superglue import SuperGlue
 from simple_sfm.models.superpoint import SuperPoint
