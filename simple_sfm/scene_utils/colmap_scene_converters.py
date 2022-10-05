@@ -200,6 +200,7 @@ def write_view_params_file_nerf_like(
         work_dir,
         relative_frames_path,
         up_vec=None,
+        split_idx_list=None,
 ):
     """
     Write information about scene views (intrinsics, extrinsics) to RealEstate10K like txt file.
@@ -207,6 +208,7 @@ def write_view_params_file_nerf_like(
     :param images_colmap:
     :param info:
     :param views_output_file_path:
+    :param split_idx_list list of indexes for splitting transform.json on seceral parts.
     :return:
     """
 
@@ -237,7 +239,8 @@ def write_view_params_file_nerf_like(
         frame = {
             "file_path": rel_name,
             "sharpness": 100,
-            "transform_matrix": c2w
+            "transform_matrix": c2w,
+            "id": item[1].id,
         }
 
         frames.append(frame)
@@ -279,34 +282,42 @@ def write_view_params_file_nerf_like(
     for f in frames:
         f["transform_matrix"][0:3, 3] *= 4.0 / avglen  # scale to "nerf sized"
 
-    # sort frames by id
-    frames.sort(key=lambda d: d['file_path'])
+    frames_dict = {el['id']: el for el in frames}
 
-    for f in frames:
-        f["transform_matrix"] = f["transform_matrix"].tolist()
+    if split_idx_list is None:
+        split_idx_list = [len(frames)]
 
-    out = {
-        "camera_angle_x": scene_info['angle_x'],
-        "camera_angle_y": scene_info['angle_y'],
-        "fl_x": scene_info['f_x'] * scene_info['original_resolution_x'],
-        "fl_y": scene_info['f_y'] * scene_info['original_resolution_y'],
-        "k1": scene_info['k1'],
-        "k2": scene_info['k2'],
-        "p1": scene_info['p1'],
-        "p2": scene_info['p2'],
-        "cx": scene_info['c_x'] * scene_info['original_resolution_x'],
-        "cy": scene_info['c_y'] * scene_info['original_resolution_y'],
-        "w": scene_info['original_resolution_x'],
-        "h": scene_info['original_resolution_y'],
-        "frames": frames,
-    }
+    idx_shift = 0
+    for i, split_idx in enumerate(split_idx_list):
+        curr_frames = [frames_dict[i] for i in range(idx_shift, split_idx)]
+        for f in curr_frames:
+            f["transform_matrix"] = f["transform_matrix"].tolist()
 
-    output_path = os.path.join(work_dir, 'transforms.json')
-    print(f"[INFO] writing {len(frames)} frames to {output_path}")
-    with open(output_path, "w") as outfile:
-        json.dump(out, outfile, indent=2)
+        out = {
+            "camera_angle_x": scene_info['angle_x'],
+            "camera_angle_y": scene_info['angle_y'],
+            "fl_x": scene_info['f_x'] * scene_info['original_resolution_x'],
+            "fl_y": scene_info['f_y'] * scene_info['original_resolution_y'],
+            "k1": scene_info['k1'],
+            "k2": scene_info['k2'],
+            "p1": scene_info['p1'],
+            "p2": scene_info['p2'],
+            "cx": scene_info['c_x'] * scene_info['original_resolution_x'],
+            "cy": scene_info['c_y'] * scene_info['original_resolution_y'],
+            "w": scene_info['original_resolution_x'],
+            "h": scene_info['original_resolution_y'],
+            "frames": curr_frames,
+        }
 
-    return up
+        if i == 0:
+            transforms_file_name = 'transforms.json'
+        else:
+            transforms_file_name = f'transforms_{i}.json'
+
+        output_path = os.path.join(work_dir, transforms_file_name)
+        print(f"[INFO] writing {len(curr_frames)} frames to {output_path}")
+        with open(output_path, "w") as outfile:
+            json.dump(out, outfile, indent=2)
 
 
 def colmap_sparse_to_re10k_like_views(
