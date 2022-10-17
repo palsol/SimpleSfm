@@ -180,7 +180,7 @@ class OneVideoSceneProcesser:
 
         if self.max_len is not None:
             if self.max_len < self.scene_num_frames:
-                self.skip = math.ceil(self.scene_num_frames / self.max_len)
+                self.skip = self.scene_num_frames // self.max_len
             else:
                 self.skip = 1
         elif skip is not None:
@@ -245,3 +245,4 @@ class OneVideoSceneProcesser:
             while shift < len(images_sharpness):
                 os.remove(images_sharpness[shift][1])
                 shift += 1
+                self.scene_num_frames -= 1
