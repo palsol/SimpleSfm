@@ -240,7 +240,7 @@ def write_view_params_file_nerf_like(
             "file_path": rel_name,
             "sharpness": 100,
             "transform_matrix": c2w,
-            "id": item[1].id,
+            "id": int(item[1].id) - 1,
         }
 
         frames.append(frame)
