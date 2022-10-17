@@ -364,5 +364,5 @@ def colmap_sparse_to_nerf_like_views(
         scene_info=info,
         work_dir=work_dir_path,
         relative_frames_path=relative_frames_path,
-        split_idx_list = split_index,
+        split_idx_list = None,
     )
