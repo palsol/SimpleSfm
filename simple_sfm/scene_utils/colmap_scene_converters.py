@@ -289,7 +289,7 @@ def write_view_params_file_nerf_like(
 
     idx_shift = 0
     for i, split_idx in enumerate(split_idx_list):
-        curr_frames = [frames_dict[i] for i in range(idx_shift, split_idx)]
+        curr_frames = [frames_dict[j] for j in range(idx_shift, split_idx)]
         for f in curr_frames:
             f["transform_matrix"] = f["transform_matrix"].tolist()
 
@@ -363,5 +363,6 @@ def colmap_sparse_to_nerf_like_views(
         images_colmap,
         scene_info=info,
         work_dir=work_dir_path,
-        relative_frames_path=relative_frames_path
+        relative_frames_path=relative_frames_path,
+        split_idx_list = split_index,
     )
