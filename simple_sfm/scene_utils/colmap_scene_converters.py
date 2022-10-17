@@ -8,7 +8,7 @@ import numpy as np
 import torch
 
 from simple_sfm.utils.geometry import qvec2rotmat, rotmat
-from simple_sfm.scene_utils.read_write_colmap_data import read_model
+from simple_sfm.utils.colmap.read_write_colmap_data import read_model
 from simple_sfm.cameras.camera_pinhole import CameraPinhole
 
 
