@@ -85,11 +85,11 @@ class CameraPinhole:
     @classmethod
     def from_colmap(cls, images: dict, cameras: dict):
         """
-        Init :class:`~Cameras` instance from colmap scene data
+        Init :class:`~Cameras` instance from colmap_utils scene data
 
         Args:
-            images: colmap information about every view, usually stored in images.bin/txt
-            cameras: colmap cameras information,usually stored in cameras.bin/txt
+            images: colmap_utils information about every view, usually stored in images.bin/txt
+            cameras: colmap_utils cameras information,usually stored in cameras.bin/txt
         Returns:
             CameraPinhole: class:`~Cameras`
         """

@@ -10,8 +10,8 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from simple_sfm.utils.colmap import read_write_colmap_data
-from simple_sfm.matcher.matcher import Frame
+from simple_sfm.colmap_utils import read_write_colmap_data
+from simple_sfm.matchers.matcher import Frame
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class ColmapBdManager(object):
         if ~os.path.isfile(self.db_path) and self.images_folder_path is not None:
             self.build_dummy_data_base()
         else:
-            logger.error('For building new colmap database, the images path must be specify!')
+            logger.error('For building new colmap_utils database, the images path must be specify!')
             return
 
         self.connection = sqlite3.connect(self.db_path)
@@ -97,7 +97,7 @@ class ColmapBdManager(object):
         logger.info('Starts mapper.')
         start = time.time()
 
-        command = ['colmap', 'mapper',
+        command = ['colmap_utils', 'mapper',
                    '--Mapper.ba_refine_principal_point', '1',
                    '--Mapper.filter_max_reproj_error', '2',
                    '--Mapper.min_num_matches', '32',
@@ -124,14 +124,14 @@ class ColmapBdManager(object):
     @staticmethod
     def triangulation(db_path, images_folder_path, sparse_path, output_path):
         """
-        Run colmap triangulation.
+        Run colmap_utils triangulation.
         :return:
         """
 
         logger.info('Starts point triangulator.')
         start = time.time()
 
-        subprocess.run(['colmap', 'point_triangulator',
+        subprocess.run(['colmap_utils', 'point_triangulator',
                         '--log_level', '1',
                         '--Mapper.init_min_tri_angle', '4',
                         '--Mapper.init_min_num_inliers', '25',
@@ -153,7 +153,7 @@ class ColmapBdManager(object):
         logger.info('Starts image_undistorter.')
         start = time.time()
 
-        subprocess.run(['colmap',
+        subprocess.run(['colmap_utils',
                         'image_undistorter',
                         '--image_path', images_folder_path,
                         '--input_path', sparse_path,
@@ -174,7 +174,7 @@ class ColmapBdManager(object):
         start = time.time()
 
         subprocess.run([
-            'colmap',
+            'colmap_utils',
             'patch_match_stereo',
             '--workspace_path', output_path,
             '--workspace_format', 'COLMAP',
@@ -194,7 +194,7 @@ class ColmapBdManager(object):
         logger.info('Starts stereo_fusion.')
         start = time.time()
 
-        subprocess.run(['colmap',
+        subprocess.run(['colmap_utils',
                         'stereo_fusion',
                         '--workspace_path', dense_path,
                         '--workspace_format', 'COLMAP',
@@ -250,12 +250,12 @@ class ColmapBdManager(object):
 
     def build_dummy_data_base(self):
         """
-        Build dummy colmap database, using feature_extractor command.
+        Build dummy colmap_utils database, using feature_extractor command.
         :return:
         """
         # TODO  Implement creating database without calling feature_extractor command.
 
-        command = ['colmap', 'feature_extractor',
+        command = ['colmap_utils', 'feature_extractor',
                    '--log_level', '0',
                    '--ImageReader.single_camera', '1',
                    '--ImageReader.default_focal_length_factor', '0.85',
@@ -372,7 +372,7 @@ class ColmapBdManager(object):
         match_txt_path = os.path.join(self.db_dir, 'match.txt')
         np.savetxt(match_txt_path, match_table_txt, fmt="%s", delimiter=' ')
 
-        subprocess.run(['colmap', 'matches_importer',
+        subprocess.run(['colmap_utils', 'matches_importer',
                         '--database_path', self.db_path,
                         '--match_list_path', match_txt_path,
                         '--match_type', 'pairs'],

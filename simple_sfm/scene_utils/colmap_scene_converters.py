@@ -8,27 +8,27 @@ import numpy as np
 import torch
 
 from simple_sfm.utils.geometry import qvec2rotmat, rotmat
-from simple_sfm.utils.colmap.read_write_colmap_data import read_model
+from simple_sfm.colmap_utils.read_write_colmap_data import read_model
 from simple_sfm.cameras.camera_pinhole import CameraPinhole
 
 
 def get_info_from_colmap_scene(path_sparse, device='cuda'):
     """
-    Parse info from colmap bin files, return dict with:
+    Parse info from colmap_utils bin files, return dict with:
     Scene params:
-        num_points - number of 3d points in colmap scene
+        num_points - number of 3d points in colmap_utils scene
         num_views - number of views
         p_x - depth for x percentile, calculated via all scene views
-        error_mean - mean of colmap 3d point error
-        error_std - std of colmap 3d point error
+        error_mean - mean of colmap_utils 3d point error
+        error_std - std of colmap_utils 3d point error
 
     Intrinsic (relative):
         f_x - focal distance x
         f_y - focal distance y
         c_x - central point x
         c_y - central point y
-        original_resolution_x - original image x resolution (which used for colmap)
-        original_resolution_y - original image y resolution (which used for colmap)
+        original_resolution_x - original image x resolution (which used for colmap_utils)
+        original_resolution_y - original image y resolution (which used for colmap_utils)
 
     undistorted (if dense on):
         f_x_undistorted - focal distance x for undistorted images
@@ -39,7 +39,7 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
         undistorted_resolution_y - undistorted image y resolution
 
 
-    :param path_sparse: path to colmap sparse reconstruction
+    :param path_sparse: path to colmap_utils sparse reconstruction
     :return:
     """
 
@@ -329,9 +329,9 @@ def colmap_sparse_to_re10k_like_views(
         permute_axis=[0, 1, 2],
 ):
     """
-    Generate file with views in RE10k style from colmap sparse data.
+    Generate file with views in RE10k style from colmap_utils sparse data.
 
-    :param scene_colmap_sparse_path: path to colmap sparse dir
+    :param scene_colmap_sparse_path: path to colmap_utils sparse dir
     :param views_file_output_path: path to dir where views.txt will be stored
     :param device: device for processing
     :param scene_name:
