@@ -28,7 +28,8 @@ class CameraPinhole:
     def __init__(self,
                  extrinsics: Optional[torch.Tensor] = None,
                  intrinsics: Optional[torch.Tensor] = None,
-                 images_sizes: Optional[torch.Tensor] = None
+                 images_sizes: Optional[torch.Tensor] = None,
+                 cameras_ids: List = None,
                  ):
         """
         Special class for processing space transforms in some camera rig system.
@@ -39,6 +40,7 @@ class CameraPinhole:
             intrinsics (torch.Tensor): Bc x 3 x 3, cameras intrinsics matrices
             images_sizes (torch.Tensor): Bc x 2 or 1 x 2 or 2, camera image plane size in pixels,
                 needed for compute camera frustums.
+            cameras_ids: list of size Bc with cameras ids
         """
 
         if extrinsics is not None:
@@ -47,6 +49,8 @@ class CameraPinhole:
             self.intrinsics = intrinsics
         if images_sizes is not None:
             self.images_sizes = images_sizes
+
+        self.cameras_ids = cameras_ids
 
     @classmethod
     def from_cameras(cls, cameras: List['CameraPinhole']):
@@ -99,6 +103,7 @@ class CameraPinhole:
         extrinsics = []
         intrinsics = []
         images_sizes = []
+        cameras_ids = []
         for item in images.items():
             camera = cameras[item[1].camera_id]
             rotation = qvec2rotmat(item[1].qvec)
@@ -110,10 +115,12 @@ class CameraPinhole:
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
             images_sizes.append(images_size)
+            cameras_ids.append(camera.id)
 
         return cls(extrinsics=torch.tensor(extrinsics),
                    intrinsics=torch.tensor(intrinsics),
-                   images_sizes=torch.tensor(images_sizes))
+                   images_sizes=torch.tensor(images_sizes),
+                   cameras_ids=cameras_ids)
 
     def __len__(self):
         return self.extrinsics.shape[0]
