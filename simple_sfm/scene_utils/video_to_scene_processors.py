@@ -171,6 +171,7 @@ class OneVideoSceneProcesser:
         self.img_prefix = img_prefix
         self.filter_with_sharpness = filter_with_sharpness
         self.force_rotate_code = force_rotate_code
+        self.num_saved_frames = 0
 
         os.makedirs(self.dataset_output_path, exist_ok=True)
         os.makedirs(self.dataset_frames_path, exist_ok=True)
@@ -228,6 +229,7 @@ class OneVideoSceneProcesser:
             success, image = vidcap.read()
             count += 1
 
+        self.num_saved_frames = count
         if self.filter_with_sharpness:
             shift = 0
             while shift + self.skip < len(images_sharpness):
@@ -235,14 +237,16 @@ class OneVideoSceneProcesser:
                 sub_seq = sorted(sub_seq, key=lambda x: x[2])
                 for el in sub_seq[:-1]:
                     os.remove(el[1])
+                    self.num_saved_frames -= 1
                 curr_pos = sub_seq[-1][0]
 
                 for el in images_sharpness[shift + self.skip:curr_pos + self.skip]:
                     os.remove(el[1])
+                    self.num_saved_frames -= 1
 
                 shift = curr_pos + self.skip
 
             while shift < len(images_sharpness):
                 os.remove(images_sharpness[shift][1])
                 shift += 1
-                self.scene_num_frames -= 1
+                self.num_saved_frames -= 1

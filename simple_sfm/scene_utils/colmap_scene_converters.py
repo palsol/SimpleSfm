@@ -201,6 +201,7 @@ def write_view_params_file_nerf_like(
         relative_frames_path,
         up_vec=None,
         split_idx_list=None,
+        scene_rescale=False,
 ):
     """
     Write information about scene views (intrinsics, extrinsics) to RealEstate10K like txt file.
@@ -217,6 +218,7 @@ def write_view_params_file_nerf_like(
     frames = []
 
     up = np.zeros(3)
+    scene_scale = 0
 
     images = {k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)}
     for item in images.items():
@@ -224,7 +226,7 @@ def write_view_params_file_nerf_like(
 
         qvec = item[1].qvec
         tvec = item[1].tvec
-        R = qvec2rotmat(-qvec)
+        R = qvec2rotmat(qvec)
         t = tvec.reshape([3, 1])
         m = np.concatenate([np.concatenate([R, t], 1), bottom], 0)
         c2w = np.linalg.inv(m)
@@ -245,42 +247,47 @@ def write_view_params_file_nerf_like(
 
         frames.append(frame)
 
-    N = len(frames)
-    up = up / np.linalg.norm(up)
-    if up_vec is not None:
-        up = up_vec
-
-    print("[INFO] up vector was", up)
-
-    R = rotmat(up, [0, 0, 1])  # rotate up vector to [0,0,1]
-    R = np.pad(R, [0, 1])
-    R[-1, -1] = 1
-
-    for frame in frames:
-        frame["transform_matrix"] = np.matmul(R, frame["transform_matrix"])  # rotate up to be the z axis
-
-    # find a central point they are all looking at
-    print("[INFO] computing center of attention...")
-    totw = 0.0
-    totp = np.array([0.0, 0.0, 0.0])
-    for f in frames:
-        mf = f["transform_matrix"][0:3, :]
-        for g in frames:
-            mg = g["transform_matrix"][0:3, :]
-            p, weight = closest_point_2_lines(mf[:, 3], mf[:, 2], mg[:, 3], mg[:, 2])
-            if weight > 0.01:
-                totp += p * weight
-                totw += weight
-    totp /= totw
-    for f in frames:
-        f["transform_matrix"][0:3, 3] -= totp
-    avglen = 0.
-    for f in frames:
-        avglen += np.linalg.norm(f["transform_matrix"][0:3, 3])
-    avglen /= N
-    print("[INFO] avg camera distance from origin", avglen)
-    for f in frames:
-        f["transform_matrix"][0:3, 3] *= 4.0 / avglen  # scale to "nerf sized"
+    # N = len(frames)
+    # up = up / np.linalg.norm(up)
+    # if up_vec is not None:
+    #     up = up_vec
+    #
+    # print("[INFO] up vector was", up)
+    #
+    # R = rotmat(up, [0, 0, 1])  # rotate up vector to [0,0,1]
+    # R = np.pad(R, [0, 1])
+    # R[-1, -1] = 1
+    #
+    # for frame in frames:
+    #     frame["transform_matrix"] = np.matmul(R, frame["transform_matrix"])  # rotate up to be the z axis
+    #
+    # # find a central point they are all looking at
+    # print("[INFO] computing center of attention...")
+    # totw = 0.0
+    # totp = np.array([0.0, 0.0, 0.0])
+    # for f in frames:
+    #     mf = f["transform_matrix"][0:3, :]
+    #     for g in frames:
+    #         mg = g["transform_matrix"][0:3, :]
+    #         p, weight = closest_point_2_lines(mf[:, 3], mf[:, 2], mg[:, 3], mg[:, 2])
+    #         if weight > 0.01:
+    #             totp += p * weight
+    #             totw += weight
+    # totp /= totw
+    # for f in frames:
+    #     f["transform_matrix"][0:3, 3] -= totp
+    # avglen = 0.
+    # for f in frames:
+    #     avglen += np.linalg.norm(f["transform_matrix"][0:3, 3])
+    # avglen /= N
+    # print("[INFO] avg camera distance from origin", avglen)
+    #
+    # if scene_rescale:
+    #     scene_scale = 4.0 / avglen
+    #     for f in frames:
+    #         f["transform_matrix"][0:3, 3] *= scene_scale  # scale to "nerf sized"
+    # else:
+    #     scene_scale = 1
 
     frames_dict = {el['id']: el for el in frames}
 
@@ -307,6 +314,7 @@ def write_view_params_file_nerf_like(
             "w": scene_info['original_resolution_x'],
             "h": scene_info['original_resolution_y'],
             "frames": curr_frames,
+            "scene_scale": scene_scale,
         }
 
         if i == 0:
