@@ -66,8 +66,8 @@ class CameraMultiple(CameraPinhole):
         selected_extrinsics = self._unflatten_tensor(self.extrinsics)[key]
         selected_intrinsics = self._unflatten_tensor(self.intrinsics)[key]
         image_sizes = None if not hasattr(self, 'images_sizes') else self._unflatten_tensor(self.images_sizes)[key]
-        cameras_ids = None if not hasattr(self, 'cameras_ids') else self._unflatten_nparray(self.images_sizes)[key]
-        cameras_names = None if not hasattr(self, 'cameras_names') else self._unflatten_nparray(self.images_sizes)[key]
+        cameras_ids = None if not hasattr(self, 'cameras_ids') else self._unflatten_nparray(self.cameras_ids)[key]
+        cameras_names = None if not hasattr(self, 'cameras_names') else self._unflatten_nparray(self.cameras_names)[key]
 
         return CameraMultiple(selected_extrinsics, selected_intrinsics, image_sizes, cameras_ids, cameras_names)
 
