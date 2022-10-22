@@ -44,14 +44,13 @@ class CameraMultiple(CameraPinhole):
             intrinsics=intrinsics.contiguous().view(-1, *intrinsics.shape[-2:]),
             images_sizes=images_sizes if images_sizes is None else torch.tensor(images_sizes)
                 .expand(*extrinsics.shape[:-2], -1).contiguous().view(-1, 2),
+            cameras_ids=np.array(cameras_ids).reshape(-1, 1),
+            cameras_names=np.array(cameras_names).reshape(-1, 1),
         )
         self.cameras_shape = extrinsics.shape[:-2]
         self.cameras_numel = torch.tensor(self.cameras_shape).prod().item()
         self.cameras_ndim = len(self.cameras_shape)
         self.images_size = images_sizes
-
-        self.cameras_ids = cameras_ids
-        self.cameras_names = cameras_names
 
     def __len__(self):
         return self.cameras_shape[0]
@@ -67,7 +66,10 @@ class CameraMultiple(CameraPinhole):
         selected_extrinsics = self._unflatten_tensor(self.extrinsics)[key]
         selected_intrinsics = self._unflatten_tensor(self.intrinsics)[key]
         image_sizes = None if not hasattr(self, 'images_sizes') else self._unflatten_tensor(self.images_sizes)[key]
-        return CameraMultiple(selected_extrinsics, selected_intrinsics, image_sizes)
+        cameras_ids = None if not hasattr(self, 'cameras_ids') else self._unflatten_nparray(self.images_sizes)[key]
+        cameras_names = None if not hasattr(self, 'cameras_names') else self._unflatten_nparray(self.images_sizes)[key]
+
+        return CameraMultiple(selected_extrinsics, selected_intrinsics, image_sizes, cameras_ids, cameras_names)
 
     def _flatten_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
         assert tensor.shape[:self.cameras_ndim] == self.cameras_shape, \
@@ -78,6 +80,11 @@ class CameraMultiple(CameraPinhole):
         assert tensor.shape[0] == self.cameras_numel, \
             f'Expected length {self.cameras_numel} but got {tensor.shape[0]}'
         return tensor.contiguous().view(*self.cameras_shape, *tensor.shape[1:])
+
+    def _unflatten_nparray(self, array: np.array) -> torch.Tensor:
+        assert array.shape[0] == self.cameras_numel, \
+            f'Expected length {self.cameras_numel} but got {array.shape[0]}'
+        return array.reshape(*self.cameras_shape, *array.shape[1:])
 
     def get_extrinsics(self):
         return self.extrinsics.view(*self.cameras_shape, *self.extrinsics.shape[-2:])
