@@ -5,10 +5,11 @@ from typing import Union, Tuple, List
 
 import torch
 import torch.nn.functional as F
+import numpy as np
 
 from .camera_pinhole import CameraPinhole
 from simple_sfm.utils.coord_conversion import coords_pixel_to_film
-
+from simple_sfm.utils.geometry import qvec2rotmat
 
 class CameraMultiple(CameraPinhole):
     """
@@ -21,12 +22,22 @@ class CameraMultiple(CameraPinhole):
                  extrinsics: torch.Tensor,
                  intrinsics: torch.Tensor,
                  images_sizes: Union[Tuple, List] = None,
+                 cameras_ids: List = None,
+                 cameras_names: List = None,
                  ):
+        """
+         Args:
+            extrinsics (torch.Tensor): Bc x 3 x 4 or Bc x 4 x 4, cameras extrinsics matrices
+            intrinsics (torch.Tensor): Bc x 3 x 3, cameras intrinsics matrices
+            images_sizes (torch.Tensor): Bc x 2 or 1 x 2 or 2, camera image plane size in pixels,
+                needed for compute camera frustums.
+            cameras_ids: list of size Bc with cameras ids
+            cameras_ids: list of size Bc with cameras names
+        """
+
         assert extrinsics.shape[:-2] == intrinsics.shape[:-2], \
             f'{extrinsics.shape} vs {intrinsics.shape}'
-        # if images_sizes is not None:
-        #     print(images_sizes.shape, extrinsics.shape)
-        #     assert extrinsics.shape[:-2] == images_sizes.shape[:-1]
+
 
         super().__init__(
             extrinsics=extrinsics.contiguous().view(-1, *extrinsics.shape[-2:]),
@@ -38,6 +49,9 @@ class CameraMultiple(CameraPinhole):
         self.cameras_numel = torch.tensor(self.cameras_shape).prod().item()
         self.cameras_ndim = len(self.cameras_shape)
         self.images_size = images_sizes
+
+        self.cameras_ids = cameras_ids
+        self.cameras_names = cameras_names
 
     def __len__(self):
         return self.cameras_shape[0]
@@ -74,6 +88,45 @@ class CameraMultiple(CameraPinhole):
     @classmethod
     def from_cameras(cls, cameras):
         raise NotImplementedError
+
+    @classmethod
+    def from_colmap(cls, images: dict, cameras: dict):
+        """
+        Init :class:`~Cameras` instance from colmap_utils scene data
+
+        Args:
+            images: colmap_utils information about every view, usually stored in images.bin/txt
+            cameras: colmap_utils cameras information,usually stored in cameras.bin/txt
+        Returns:
+            CameraPinhole: class:`~Cameras`
+        """
+
+        images = {k: v for k, v in sorted(images.items(), key=lambda item: item[1].name)}
+
+        extrinsics = []
+        intrinsics = []
+        images_sizes = []
+        cameras_ids = []
+        cameras_names = []
+        for item in images.items():
+            camera = cameras[item[1].camera_id]
+            rotation = qvec2rotmat(item[1].qvec)
+            extrinsic = np.append(rotation, item[1].tvec[..., np.newaxis], axis=1)
+            intrinsic = [[camera.params[0] / camera.width, 0, camera.params[1] / camera.width],
+                         [0, camera.params[0] / camera.height, camera.params[2] / camera.height],
+                         [0, 0, 1]]
+            images_size = [camera.width, camera.height]
+            extrinsics.append(extrinsic)
+            intrinsics.append(intrinsic)
+            images_sizes.append(images_size)
+            cameras_ids.append(item[1].id)
+            cameras_names.append(item[1].name)
+
+        return cls(extrinsics=torch.tensor(extrinsics),
+                   intrinsics=torch.tensor(intrinsics),
+                   images_sizes=torch.tensor(images_sizes),
+                   cameras_ids=cameras_ids,
+                   cameras_names=cameras_names)
 
     @classmethod
     def broadcast_cameras(cls, broadcasted_camera, source_camera):
