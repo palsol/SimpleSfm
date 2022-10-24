@@ -38,14 +38,13 @@ class CameraMultiple(CameraPinhole):
         assert extrinsics.shape[:-2] == intrinsics.shape[:-2], \
             f'{extrinsics.shape} vs {intrinsics.shape}'
 
-
         super().__init__(
             extrinsics=extrinsics.contiguous().view(-1, *extrinsics.shape[-2:]),
             intrinsics=intrinsics.contiguous().view(-1, *intrinsics.shape[-2:]),
             images_sizes=images_sizes if images_sizes is None else torch.tensor(images_sizes)
                 .expand(*extrinsics.shape[:-2], -1).contiguous().view(-1, 2),
-            cameras_ids=np.array(cameras_ids).reshape(-1, 1),
-            cameras_names=np.array(cameras_names).reshape(-1, 1),
+            cameras_ids=cameras_ids if cameras_ids is None else np.array(cameras_ids).reshape(-1, 1),
+            cameras_names=cameras_names if cameras_names is None else np.array(cameras_names).reshape(-1, 1),
         )
         self.cameras_shape = extrinsics.shape[:-2]
         self.cameras_numel = torch.tensor(self.cameras_shape).prod().item()
