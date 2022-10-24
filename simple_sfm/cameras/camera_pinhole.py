@@ -51,9 +51,10 @@ class CameraPinhole:
             self.intrinsics = intrinsics
         if images_sizes is not None:
             self.images_sizes = images_sizes
-
-        self.cameras_ids = cameras_ids
-        self.cameras_names = cameras_names
+        if cameras_ids is not None:
+            self.cameras_ids = cameras_ids
+        if cameras_names is not None:
+            self.cameras_names = cameras_names
 
     @classmethod
     def from_cameras(cls, cameras: List['CameraPinhole']):
