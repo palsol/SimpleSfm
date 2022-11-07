@@ -348,7 +348,7 @@ def write_view_params_file_nerf_like(
             json.dump(out, outfile, indent=2)
 
 
-def write_view_params_to_simpleSfm_json_file(
+def write_view_params_to_simple_sfm_json_file(
         images_colmap,
         cameras_intrinsics,
         work_dir,
@@ -461,14 +461,14 @@ def colmap_sparse_to_nerf_like_views(
     )
 
 
-def colmap_sparse_to_simpleSfm_json_views(
+def colmap_sparse_to_simple_sfm_json_views(
         scene_colmap_sparse_path,
         work_dir_path,
         relative_frames_path,
 ):
     cameras_intrinsics, images_colmap = get_info_from_colmap_multi_camera_scene(scene_colmap_sparse_path)
 
-    write_view_params_to_simpleSfm_json_file(
+    write_view_params_to_simple_sfm_json_file(
         images_colmap=images_colmap,
         cameras_intrinsics=cameras_intrinsics,
         work_dir=work_dir_path,

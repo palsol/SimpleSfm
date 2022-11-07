@@ -1,6 +1,7 @@
 __all__ = ['CameraMultiple']
 
 import math
+import json
 from typing import Union, Tuple, List
 
 import torch
@@ -127,6 +128,55 @@ class CameraMultiple(CameraPinhole):
             images_sizes.append(images_size)
             cameras_ids.append(item[1].id)
             cameras_names.append(item[1].name)
+
+        return cls(extrinsics=torch.tensor(extrinsics),
+                   intrinsics=torch.tensor(intrinsics),
+                   images_sizes=torch.tensor(images_sizes),
+                   cameras_ids=cameras_ids,
+                   cameras_names=cameras_names)
+
+    @classmethod
+    def from_simple_sfm_json(cls, path):
+        """
+        Init :class:`~Cameras` instance from simpleSfm json
+
+        Args:
+            images: colmap_utils information about every view, usually stored in images.bin/txt
+            cameras: colmap_utils cameras information,usually stored in cameras.bin/txt
+        Returns:
+            CameraPinhole: class:`~Cameras`
+        """
+
+        with open(path) as f:
+            views = json.load(f)
+
+        views = sorted(views['frames'], key=lambda item: item['id'])
+
+        extrinsics = []
+        intrinsics = []
+        images_sizes = []
+        cameras_ids = []
+        cameras_names = []
+
+        for view in views:
+            intrinsic = view['intrinsic']
+            c2w = np.array(views[0]['transform_matrix'])
+            c2w[2, :] *= -1
+            c2w = c2w[[1, 0, 2, 3], :]
+            c2w[0:3, 1] *= -1
+            c2w[0:3, 2] *= -1
+            w2c = np.linalg.inv(c2w)
+
+            extrinsic = np.array(w2c)
+            intrinsic = [[intrinsic['f_x'], 0, intrinsic['c_x']],
+                         [0, intrinsic['f_y'], intrinsic['c_x']],
+                         [0, 0, 1]]
+            images_size = [intrinsic['original_resolution_x'], intrinsic['original_resolution_y']]
+            extrinsics.append(extrinsic)
+            intrinsics.append(intrinsic)
+            images_sizes.append(images_size)
+            cameras_ids.append(view['id'])
+            cameras_names.append(view['file_path'])
 
         return cls(extrinsics=torch.tensor(extrinsics),
                    intrinsics=torch.tensor(intrinsics),
