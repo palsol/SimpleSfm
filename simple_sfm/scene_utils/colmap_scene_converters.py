@@ -10,11 +10,75 @@ import torch
 from simple_sfm.utils.geometry import qvec2rotmat, rotmat
 from simple_sfm.colmap_utils.read_write_colmap_data import read_model
 from simple_sfm.cameras.camera_pinhole import CameraPinhole
+from collections import OrderedDict
+
+from simple_sfm.utils.geometry import qvec2rotmat, rotmat
+from simple_sfm.colmap_utils.read_write_colmap_data import read_model
+from simple_sfm.cameras.camera_pinhole import CameraPinhole
 
 
-def get_info_from_colmap_scene(path_sparse, device='cuda'):
+def get_intrinsic_info(camera_colmap):
+    info = {'k1': 0, 'k2': 0, 'p1': 0, 'p2': 0}
+
+    if camera_colmap.model == 'PINHOLE':
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
+    elif camera_colmap.model == 'SIMPLE_RADIAL':
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[3])
+    elif camera_colmap.model == 'RADIAL':
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[4])
+        info['k1'] = float(camera_colmap.params[5])
+    elif camera_colmap.model == 'OPENCV':
+        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
+        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
+        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
+        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
+        info['k1'] = float(camera_colmap.params[4])
+        info['k2'] = float(camera_colmap.params[5])
+        info['p1'] = float(camera_colmap.params[6])
+        info['p2'] = float(camera_colmap.params[7])
+    else:
+        print(f'Camera type is not supported, {camera_colmap}')
+        return None
+
+    info['angle_x'] = float(math.atan(1.0 / (info['f_x'] * 2)) * 2)
+    info['angle_y'] = float(math.atan(1.0 / (info['f_y'] * 2)) * 2)
+    info['fov_x'] = float(info['angle_x'] * 180 / math.pi)
+    info['fov_y'] = float(info['angle_y'] * 180 / math.pi)
+
+    info['original_resolution_x'] = int(camera_colmap.width)
+    info['original_resolution_y'] = int(camera_colmap.height)
+
+    return info
+
+
+def get_info_from_colmap_multi_camera_scene(path_sparse):
     """
-    Parse info from colmap_utils bin files, return dict with:
+    Parse info from colmap_utils bin files for a scene with multi cameras, return cameras_intrinsics and colmap images
+
+    :param path_sparse: path to colmap_utils sparse reconstruction
+    :return:
+    """
+
+    cameras_colmap, images_colmap, _ = read_model(path_sparse)
+    images_colmap = OrderedDict({k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)})
+    cameras_intrinsics = OrderedDict({k: get_intrinsic_info(v) for k, v in cameras_colmap.items()})
+    return cameras_intrinsics, images_colmap
+
+
+def get_info_from_colmap_single_camera_scene(path_sparse, device='cuda'):
+    """
+    Parse info from colmap_utils bin files for a scene with single camera, return dict with:
     Scene params:
         num_points - number of 3d points in colmap_utils scene
         num_views - number of views
@@ -79,51 +143,7 @@ def get_info_from_colmap_scene(path_sparse, device='cuda'):
     info['num_views'] = int(len(images_colmap))
 
     camera_colmap = cameras_colmap[1]
-
-    info['k1'] = 0
-    info['k2'] = 0
-    info['p1'] = 0
-    info['p2'] = 0
-    # info['c_x'] = camera_colmap.width / 2
-    # info['c_y'] = camera_colmap.height / 2
-    if camera_colmap.model == 'PINHOLE':
-        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
-        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
-        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
-        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
-    elif camera_colmap.model == 'SIMPLE_RADIAL':
-        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
-        info['f_y'] = float(camera_colmap.params[0] / camera_colmap.height)
-        info['c_x'] = float(camera_colmap.params[1] / camera_colmap.width)
-        info['c_y'] = float(camera_colmap.params[2] / camera_colmap.height)
-        info['k1'] = float(camera_colmap.params[3])
-    elif camera_colmap.model == 'RADIAL':
-        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
-        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
-        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
-        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
-        info['k1'] = float(camera_colmap.params[4])
-        info['k1'] = float(camera_colmap.params[5])
-    elif camera_colmap.model == 'OPENCV':
-        info['f_x'] = float(camera_colmap.params[0] / camera_colmap.width)
-        info['f_y'] = float(camera_colmap.params[1] / camera_colmap.height)
-        info['c_x'] = float(camera_colmap.params[2] / camera_colmap.width)
-        info['c_y'] = float(camera_colmap.params[3] / camera_colmap.height)
-        info['k1'] = float(camera_colmap.params[4])
-        info['k2'] = float(camera_colmap.params[5])
-        info['p1'] = float(camera_colmap.params[6])
-        info['p2'] = float(camera_colmap.params[7])
-    else:
-        print(f'Camera type is not supported, {camera_colmap}')
-        return None
-
-    info['angle_x'] = float(math.atan(1.0 / (info['f_x'] * 2)) * 2)
-    info['angle_y'] = float(math.atan(1.0 / (info['f_y'] * 2)) * 2)
-    info['fov_x'] = float(info['angle_x'] * 180 / math.pi)
-    info['fov_y'] = float(info['angle_y'] * 180 / math.pi)
-
-    info['original_resolution_x'] = int(camera_colmap.width)
-    info['original_resolution_y'] = int(camera_colmap.height)
+    info.update(get_intrinsic_info(camera_colmap))
 
     images_colmap_undistorted = None
 
@@ -328,6 +348,73 @@ def write_view_params_file_nerf_like(
             json.dump(out, outfile, indent=2)
 
 
+def write_view_params_to_simpleSfm_json_file(
+        images_colmap,
+        cameras_intrinsics,
+        work_dir,
+        relative_frames_path,
+):
+    """
+    Write information about scene views (intrinsics, extrinsics) to json.
+
+    :param images_colmap:
+    :param cameras_intrinsics:
+    :param views_output_file_path:
+    :return:
+    """
+
+    bottom = np.array([0.0, 0.0, 0.0, 1.0]).reshape([1, 4])
+
+    frames = []
+
+    up = np.zeros(3)
+    scene_scale = 0
+
+    images = {k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)}
+    for item in images.items():
+        rel_name = os.path.join(relative_frames_path, item[1].name)
+
+        qvec = item[1].qvec
+        tvec = item[1].tvec
+        R = qvec2rotmat(qvec)
+        t = tvec.reshape([3, 1])
+        m = np.concatenate([np.concatenate([R, t], 1), bottom], 0)
+        c2w = np.linalg.inv(m)
+
+        c2w[0:3, 2] *= -1  # flip the y and z axis
+        c2w[0:3, 1] *= -1
+        c2w = c2w[[1, 0, 2, 3], :]  # swap y and z
+        c2w[2, :] *= -1  # flip whole world upside down
+
+        up += c2w[0:3, 1]
+
+        frame = {
+            "file_path": rel_name,
+            "sharpness": 100,
+            "transform_matrix": c2w,
+            "id": int(item[1].id) - 1,
+            "intrinsic": cameras_intrinsics[item[1].camera_id]
+        }
+        frames.append(frame)
+
+    frames_dict = {el['id']: el for el in frames}
+
+    for f in frames_dict:
+        f["transform_matrix"] = f["transform_matrix"].tolist()
+
+    out = {
+        "frames": frames_dict,
+        "scene_scale": scene_scale,
+    }
+
+    transforms_file_name = 'transforms.json'
+
+    output_path = os.path.join(work_dir, transforms_file_name)
+    print(f"[INFO] writing {len(frames_dict)} frames to {output_path}")
+    with open(output_path, "w") as outfile:
+        json.dump(out, outfile, indent=2)
+
+
 def colmap_sparse_to_re10k_like_views(
         scene_colmap_sparse_path,
         views_file_output_path,
@@ -347,8 +434,8 @@ def colmap_sparse_to_re10k_like_views(
     :return:
     """
     scene_views_file_path = os.path.join(views_file_output_path, 'views.txt')
-    info, images_colmap, images_colmap_undistorted = get_info_from_colmap_scene(scene_colmap_sparse_path,
-                                                                                device=device)
+    info, images_colmap, images_colmap_undistorted = get_info_from_colmap_single_camera_scene(scene_colmap_sparse_path,
+                                                                                              device=device)
     write_view_params_file_re10k_like(
         images_colmap,
         scene_name=scene_name,
@@ -365,12 +452,28 @@ def colmap_sparse_to_nerf_like_views(
         relative_frames_path,
         device='cpu',
 ):
-    info, images_colmap, images_colmap_undistorted = get_info_from_colmap_scene(scene_colmap_sparse_path,
-                                                                                device=device)
+    info, images_colmap, images_colmap_undistorted = get_info_from_colmap_single_camera_scene(scene_colmap_sparse_path,
+                                                                                              device=device)
     write_view_params_file_nerf_like(
         images_colmap,
         scene_info=info,
         work_dir=work_dir_path,
         relative_frames_path=relative_frames_path,
-        split_idx_list = None,
+        split_idx_list=None,
+    )
+
+
+def colmap_sparse_to_simpleSfm_json_views(
+        scene_colmap_sparse_path,
+        work_dir_path,
+        relative_frames_path,
+):
+    cameras_intrinsics, images_colmap = get_info_from_colmap_multi_camera_scene(scene_colmap_sparse_path)
+
+    write_view_params_to_simpleSfm_json_file(
+        images_colmap=images_colmap,
+        cameras_intrinsics=cameras_intrinsics,
+        work_dir=work_dir_path,
+        relative_frames_path=relative_frames_path,
+        split_idx_list=None,
     )
