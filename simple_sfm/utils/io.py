@@ -152,5 +152,6 @@ def save_pointcloud_to_ply(filename, xyz_points, rgb_points=None):
 
 
 def is_video_file(filename):
-    if filename.endswith((VIDEO_FILE_EXTENSIONS)):
+    if filename.lower().endswith((VIDEO_FILE_EXTENSIONS)):
         return True
+    return False
