@@ -397,20 +397,18 @@ def write_view_params_to_simpleSfm_json_file(
         }
         frames.append(frame)
 
-    frames_dict = {el['id']: el for el in frames}
-
-    for f in frames_dict:
+    for f in frames:
         f["transform_matrix"] = f["transform_matrix"].tolist()
 
     out = {
-        "frames": frames_dict,
+        "frames": frames,
         "scene_scale": scene_scale,
     }
 
     transforms_file_name = 'transforms.json'
 
     output_path = os.path.join(work_dir, transforms_file_name)
-    print(f"[INFO] writing {len(frames_dict)} frames to {output_path}")
+    print(f"[INFO] writing {len(frames)} frames to {output_path}")
     with open(output_path, "w") as outfile:
         json.dump(out, outfile, indent=2)
 
