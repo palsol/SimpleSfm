@@ -474,6 +474,5 @@ def colmap_sparse_to_simpleSfm_json_views(
         images_colmap=images_colmap,
         cameras_intrinsics=cameras_intrinsics,
         work_dir=work_dir_path,
-        relative_frames_path=relative_frames_path,
-        split_idx_list=None,
+        relative_frames_path=relative_frames_path
     )
