@@ -159,7 +159,7 @@ class CameraMultiple(CameraPinhole):
         cameras_names = []
 
         for view in views:
-            intrinsic = view['intrinsic']
+            camera_intrinsic_data = view['intrinsic']
             c2w = np.array(views[0]['transform_matrix'])
             c2w[2, :] *= -1
             c2w = c2w[[1, 0, 2, 3], :]
@@ -168,10 +168,10 @@ class CameraMultiple(CameraPinhole):
             w2c = np.linalg.inv(c2w)
 
             extrinsic = np.array(w2c)
-            intrinsic = [[intrinsic['f_x'], 0, intrinsic['c_x']],
-                         [0, intrinsic['f_y'], intrinsic['c_x']],
+            intrinsic = [[camera_intrinsic_data['f_x'], 0, camera_intrinsic_data['c_x']],
+                         [0, camera_intrinsic_data['f_y'], camera_intrinsic_data['c_x']],
                          [0, 0, 1]]
-            images_size = [intrinsic['original_resolution_x'], intrinsic['original_resolution_y']]
+            images_size = [camera_intrinsic_data['original_resolution_x'], camera_intrinsic_data['original_resolution_y']]
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
             images_sizes.append(images_size)
