@@ -389,10 +389,10 @@ def write_view_params_to_simpleSfm_json_file(
         up += c2w[0:3, 1]
 
         frame = {
+            "id": int(item[1].id) - 1,
             "file_path": rel_name,
             "sharpness": 100,
             "transform_matrix": c2w,
-            "id": int(item[1].id) - 1,
             "intrinsic": cameras_intrinsics[item[1].camera_id]
         }
         frames.append(frame)
@@ -405,7 +405,7 @@ def write_view_params_to_simpleSfm_json_file(
         "scene_scale": scene_scale,
     }
 
-    transforms_file_name = 'transforms.json'
+    transforms_file_name = 'views_data.json'
 
     output_path = os.path.join(work_dir, transforms_file_name)
     print(f"[INFO] writing {len(frames)} frames to {output_path}")
