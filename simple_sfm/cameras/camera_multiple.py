@@ -92,6 +92,22 @@ class CameraMultiple(CameraPinhole):
     def get_intrinsics(self):
         return self.intrinsics.view(*self.cameras_shape, *self.intrinsics.shape[-2:])
 
+    def _select_from_flat(self, keys):
+        selected_extrinsics = self.extrinsics[keys]
+        selected_intrinsics = self.intrinsics[keys]
+        image_sizes = None if not hasattr(self, 'images_sizes') else self.images_sizes[keys]
+        cameras_ids = None if not hasattr(self, 'cameras_ids') else self.cameras_ids[keys]
+        cameras_names = None if not hasattr(self, 'cameras_names') else self.cameras_names[keys]
+
+        return CameraMultiple(selected_extrinsics, selected_intrinsics, image_sizes, cameras_ids, cameras_names)
+
+    def get_cams_with_cams_index(self, cams_index):
+        """
+        Return 1D CameraMultiple
+        """
+        ids = [np.where(self.cameras_ids == el)[0][0] for el in cams_index]
+        return self._select_from_flat(ids)
+
     @classmethod
     def from_cameras(cls, cameras):
         raise NotImplementedError

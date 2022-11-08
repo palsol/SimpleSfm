@@ -1,20 +1,15 @@
-import os
-import math
-from collections import OrderedDict
 import json
-import yaml
+import os
+from collections import OrderedDict
 
+import math
 import numpy as np
 import torch
+import yaml
 
-from simple_sfm.utils.geometry import qvec2rotmat, rotmat
-from simple_sfm.colmap_utils.read_write_colmap_data import read_model
 from simple_sfm.cameras.camera_pinhole import CameraPinhole
-from collections import OrderedDict
-
-from simple_sfm.utils.geometry import qvec2rotmat, rotmat
 from simple_sfm.colmap_utils.read_write_colmap_data import read_model
-from simple_sfm.cameras.camera_pinhole import CameraPinhole
+from simple_sfm.utils.geometry import qvec2rotmat
 
 
 def get_intrinsic_info(camera_colmap):
