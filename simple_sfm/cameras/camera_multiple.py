@@ -160,7 +160,7 @@ class CameraMultiple(CameraPinhole):
 
         for view in views:
             camera_intrinsic_data = view['intrinsic']
-            c2w = np.array(views[0]['transform_matrix'])
+            c2w = np.array(view['transform_matrix'])
             c2w[2, :] *= -1
             c2w = c2w[[1, 0, 2, 3], :]
             c2w[0:3, 1] *= -1
