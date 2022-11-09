@@ -233,7 +233,7 @@ def write_view_params_file_nerf_like(
     frames = []
 
     up = np.zeros(3)
-    scene_scale = 0
+    scene_scale = 1
 
     images = {k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)}
     for item in images.items():
@@ -363,7 +363,7 @@ def write_view_params_to_simple_sfm_json_file(
     frames = []
 
     up = np.zeros(3)
-    scene_scale = 0
+    scene_scale = 1
 
     images = {k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)}
     for item in images.items():

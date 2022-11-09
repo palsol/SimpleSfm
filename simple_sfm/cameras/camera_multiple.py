@@ -103,7 +103,7 @@ class CameraMultiple(CameraPinhole):
 
     def get_cams_with_cams_index(self, cams_index):
         """
-        Return 1D CameraMultiple
+        Return 1D CameraMultiple selected with cameras index, it is index for cameras_ids.
         """
         ids = [np.where(self.cameras_ids == el)[0][0] for el in cams_index]
         return self._select_from_flat(ids)
