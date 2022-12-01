@@ -235,17 +235,13 @@ class CameraMultiple(CameraPinhole):
             w2c = np.array(camera_info['extrinsic'])
             w2c[0, :] *= -1
             w2c[1, :] *= -1
-            # c2w = c2w[[1, 0, 2, 3], :]
-            # c2w[0:3, 1] *= -1
-            # c2w[0:3, 2] *= -1
-            # w2c = np.linalg.inv(c2w)
 
             extrinsic = np.array(w2c)
             intrinsic = camera_info['intrinsic']
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
             cameras_ids.append(key)
-            cameras_names.append(Path(path, f'image{key}.jpg'))
+            cameras_names.append(f'image{key}.jpg')
             w, h = Image.open(cameras_names[-1]).size
             images_sizes.append([w, h])
 
