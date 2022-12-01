@@ -232,7 +232,6 @@ def write_view_params_file_nerf_like(
 
     frames = []
 
-    up = np.zeros(3)
     scene_scale = 1
 
     images = {k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)}
@@ -251,8 +250,6 @@ def write_view_params_file_nerf_like(
         c2w = c2w[[1, 0, 2, 3], :]  # swap y and z
         c2w[2, :] *= -1  # flip whole world upside down
 
-        up += c2w[0:3, 1]
-
         frame = {
             "file_path": rel_name,
             "sharpness": 100,
@@ -261,48 +258,6 @@ def write_view_params_file_nerf_like(
         }
 
         frames.append(frame)
-
-    # N = len(frames)
-    # up = up / np.linalg.norm(up)
-    # if up_vec is not None:
-    #     up = up_vec
-    #
-    # print("[INFO] up vector was", up)
-    #
-    # R = rotmat(up, [0, 0, 1])  # rotate up vector to [0,0,1]
-    # R = np.pad(R, [0, 1])
-    # R[-1, -1] = 1
-    #
-    # for frame in frames:
-    #     frame["transform_matrix"] = np.matmul(R, frame["transform_matrix"])  # rotate up to be the z axis
-    #
-    # # find a central point they are all looking at
-    # print("[INFO] computing center of attention...")
-    # totw = 0.0
-    # totp = np.array([0.0, 0.0, 0.0])
-    # for f in frames:
-    #     mf = f["transform_matrix"][0:3, :]
-    #     for g in frames:
-    #         mg = g["transform_matrix"][0:3, :]
-    #         p, weight = closest_point_2_lines(mf[:, 3], mf[:, 2], mg[:, 3], mg[:, 2])
-    #         if weight > 0.01:
-    #             totp += p * weight
-    #             totw += weight
-    # totp /= totw
-    # for f in frames:
-    #     f["transform_matrix"][0:3, 3] -= totp
-    # avglen = 0.
-    # for f in frames:
-    #     avglen += np.linalg.norm(f["transform_matrix"][0:3, 3])
-    # avglen /= N
-    # print("[INFO] avg camera distance from origin", avglen)
-    #
-    # if scene_rescale:
-    #     scene_scale = 4.0 / avglen
-    #     for f in frames:
-    #         f["transform_matrix"][0:3, 3] *= scene_scale  # scale to "nerf sized"
-    # else:
-    #     scene_scale = 1
 
     frames_dict = {el['id']: el for el in frames}
 
@@ -362,7 +317,6 @@ def write_view_params_to_simple_sfm_json_file(
 
     frames = []
 
-    up = np.zeros(3)
     scene_scale = 1
 
     images = {k: v for k, v in sorted(images_colmap.items(), key=lambda item: item[1].name)}
@@ -380,8 +334,6 @@ def write_view_params_to_simple_sfm_json_file(
         c2w[0:3, 1] *= -1
         c2w = c2w[[1, 0, 2, 3], :]  # swap y and z
         c2w[2, :] *= -1  # flip whole world upside down
-
-        up += c2w[0:3, 1]
 
         frame = {
             "id": int(item[1].id) - 1,
