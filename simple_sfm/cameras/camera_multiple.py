@@ -231,7 +231,7 @@ class CameraMultiple(CameraPinhole):
         cameras_ids = []
         cameras_names = []
 
-        for i, camera_info in enumerate(cameras_info):
+        for key, camera_info in cameras_info.items():
             w2c = np.array(camera_info['extrinsic'])
             # c2w[2, :] *= -1
             # c2w = c2w[[1, 0, 2, 3], :]
@@ -243,8 +243,8 @@ class CameraMultiple(CameraPinhole):
             intrinsic = camera_info['intrinsic']
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
-            cameras_ids.append(i)
-            cameras_names.append(Path(path, f'image{i}.jpg'))
+            cameras_ids.append(key)
+            cameras_names.append(Path(path, f'image{key}.jpg'))
             w, h = Image.open(cameras_names[-1]).size
             images_sizes.append([w, h])
 
