@@ -242,7 +242,7 @@ class CameraMultiple(CameraPinhole):
             intrinsics.append(intrinsic)
             cameras_ids.append(key)
             cameras_names.append(f'image{key}.jpg')
-            w, h = Image.open(cameras_names[-1]).size
+            w, h = Image.open(Path(path, cameras_names[-1])).size
             images_sizes.append([w, h])
 
         return cls(extrinsics=torch.tensor(extrinsics),
