@@ -376,6 +376,7 @@ class ColmapBdManager(object):
         subprocess.run(['colmap', 'matches_importer',
                         '--database_path', self.db_path,
                         '--match_list_path', match_txt_path,
+                        '--SiftMatching.use_gpu', '0',
                         '--match_type', 'pairs'],
                        stdout=subprocess.DEVNULL,
                        stderr=subprocess.DEVNULL

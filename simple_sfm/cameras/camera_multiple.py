@@ -157,6 +157,62 @@ class CameraMultiple(CameraPinhole):
         Init :class:`~Cameras` instance from simpleSfm json
 
         Args:
+            path: path to simpleSfm json
+        Returns:
+            CameraPinhole: class:`~Cameras`
+        """
+
+        with open(path) as f:
+            views = json.load(f)
+
+        views = sorted(views['frames'], key=lambda item: item['id'])
+
+        extrinsics = []
+        intrinsics = []
+        images_sizes = []
+        cameras_ids = []
+        cameras_names = []
+
+        for view in views:
+            camera_intrinsic_data = view['intrinsic']
+            c2w = np.array(view['transform_matrix'])
+            c2w[2, :] *= -1
+            c2w = c2w[[1, 0, 2, 3], :]
+            c2w[0:3, 1] *= -1
+            c2w[0:3, 2] *= -1
+            w2c = np.linalg.inv(c2w)
+
+            extrinsic = np.array(w2c)
+            intrinsic = [[camera_intrinsic_data['f_x'], 0, camera_intrinsic_data['c_x']],
+                         [0, camera_intrinsic_data['f_y'], camera_intrinsic_data['c_x']],
+                         [0, 0, 1]]
+            images_size = [camera_intrinsic_data['original_resolution_x'], camera_intrinsic_data['original_resolution_y']]
+            extrinsics.append(extrinsic)
+            intrinsics.append(intrinsic)
+            images_sizes.append(images_size)
+            cameras_ids.append(view['id'])
+            cameras_names.append(view['file_path'])
+
+        return cls(extrinsics=torch.tensor(extrinsics),
+                   intrinsics=torch.tensor(intrinsics),
+                   images_sizes=torch.tensor(images_sizes),
+                   cameras_ids=cameras_ids,
+                   cameras_names=cameras_names)
+
+    @classmethod
+    def from_KRT_dataset(cls, path):
+        """
+        Init :class:`~Cameras` instance from KRT dataset
+
+        |---- KRT.txt
+        |---- pose.txt
+        |---- image_0.jpg
+        |---- depth_0.jpg
+        |---- image_1.jpg
+        |---- depth_1.jpg
+
+
+        Args:
             images: colmap_utils information about every view, usually stored in images.bin/txt
             cameras: colmap_utils cameras information,usually stored in cameras.bin/txt
         Returns:
@@ -187,7 +243,8 @@ class CameraMultiple(CameraPinhole):
             intrinsic = [[camera_intrinsic_data['f_x'], 0, camera_intrinsic_data['c_x']],
                          [0, camera_intrinsic_data['f_y'], camera_intrinsic_data['c_x']],
                          [0, 0, 1]]
-            images_size = [camera_intrinsic_data['original_resolution_x'], camera_intrinsic_data['original_resolution_y']]
+            images_size = [camera_intrinsic_data['original_resolution_x'],
+                           camera_intrinsic_data['original_resolution_y']]
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
             images_sizes.append(images_size)
