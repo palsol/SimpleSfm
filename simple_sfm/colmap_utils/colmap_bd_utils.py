@@ -261,7 +261,7 @@ class ColmapBdManager(object):
                    '--ImageReader.default_focal_length_factor', '0.85',
                    '--SiftExtraction.peak_threshold', '0.02',
                    '--SiftExtraction.octave_resolution', '3',
-                   '--SiftExtraction.use_gpu', 0,
+                   '--SiftExtraction.use_gpu', '0',
                    '--database_path', self.db_path,
                    '--image_path', self.images_folder_path]
 
