@@ -159,8 +159,7 @@ def is_video_file(filename):
     return False
 
 
-def load_krt_data(path: str,
-                  ) -> dict:
+def load_krt_data(path: str) -> dict:
     """
     Load KRT file containing intrinsic and extrinsic parameters.
 
@@ -181,9 +180,9 @@ def load_krt_data(path: str,
 
             intrinsic = np.array([[float(x) for x in f.readline().split()] for i in range(3)])
             dist = np.array([float(x) for x in f.readline().split()])
-            extrinsic = np.array([[float(x) for x in f.readline().split()] for i in range(3)])
-
-
+            extrinsic = [[float(x) for x in f.readline().split()] for i in range(3)]
+            extrinsic.append([0, 0, 0, 1])
+            extrinsic = np.array(extrinsic)
             f.readline()
 
             cameras[name[:-1]] = {
