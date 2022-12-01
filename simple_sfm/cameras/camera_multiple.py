@@ -234,8 +234,7 @@ class CameraMultiple(CameraPinhole):
         for key, camera_info in cameras_info.items():
             w2c = np.array(camera_info['extrinsic'])
             w2c[0, :] *= -1
-            w2c[1, :] *= 1
-            w2c[2, :] *= 1
+            w2c[1, :] *= -1
 
             extrinsic = np.array(w2c)
             intrinsic = camera_info['intrinsic']
