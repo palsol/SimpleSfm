@@ -2,15 +2,18 @@ __all__ = ['CameraMultiple']
 
 import math
 import json
+from pathlib import Path
 from typing import Union, Tuple, List
 
 import torch
 import torch.nn.functional as F
 import numpy as np
+from PIL import Image
 
 from .camera_pinhole import CameraPinhole
 from simple_sfm.utils.coord_conversion import coords_pixel_to_film
 from simple_sfm.utils.geometry import qvec2rotmat
+from simple_sfm.utils.io import load_krt_data
 
 class CameraMultiple(CameraPinhole):
     """
@@ -206,10 +209,10 @@ class CameraMultiple(CameraPinhole):
 
         |---- KRT.txt
         |---- pose.txt
-        |---- image_0.jpg
-        |---- depth_0.jpg
-        |---- image_1.jpg
-        |---- depth_1.jpg
+        |---- image0.jpg
+        |---- depth0.jpg
+        |---- image1.jpg
+        |---- depth1.jpg
 
 
         Args:
@@ -219,10 +222,8 @@ class CameraMultiple(CameraPinhole):
             CameraPinhole: class:`~Cameras`
         """
 
-        with open(path) as f:
-            views = json.load(f)
-
-        views = sorted(views['frames'], key=lambda item: item['id'])
+        krt_path = Path(path, 'KRT.txt')
+        cameras_info = load_krt_data(krt_path)
 
         extrinsics = []
         intrinsics = []
@@ -230,26 +231,22 @@ class CameraMultiple(CameraPinhole):
         cameras_ids = []
         cameras_names = []
 
-        for view in views:
-            camera_intrinsic_data = view['intrinsic']
-            c2w = np.array(view['transform_matrix'])
-            c2w[2, :] *= -1
-            c2w = c2w[[1, 0, 2, 3], :]
-            c2w[0:3, 1] *= -1
-            c2w[0:3, 2] *= -1
-            w2c = np.linalg.inv(c2w)
+        for i, camera_info in enumerate(cameras_info):
+            w2c = np.array(camera_info['extrinsic'])
+            # c2w[2, :] *= -1
+            # c2w = c2w[[1, 0, 2, 3], :]
+            # c2w[0:3, 1] *= -1
+            # c2w[0:3, 2] *= -1
+            # w2c = np.linalg.inv(c2w)
 
             extrinsic = np.array(w2c)
-            intrinsic = [[camera_intrinsic_data['f_x'], 0, camera_intrinsic_data['c_x']],
-                         [0, camera_intrinsic_data['f_y'], camera_intrinsic_data['c_x']],
-                         [0, 0, 1]]
-            images_size = [camera_intrinsic_data['original_resolution_x'],
-                           camera_intrinsic_data['original_resolution_y']]
+            intrinsic = camera_info['intrinsic']
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
-            images_sizes.append(images_size)
-            cameras_ids.append(view['id'])
-            cameras_names.append(view['file_path'])
+            cameras_ids.append(i)
+            cameras_names.append(Path(path, f'image{i}.jpg'))
+            w, h = Image.open(cameras_names[-1]).size
+            images_sizes.append([w, h])
 
         return cls(extrinsics=torch.tensor(extrinsics),
                    intrinsics=torch.tensor(intrinsics),

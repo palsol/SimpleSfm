@@ -1,3 +1,5 @@
+from typing import List, Union, Tuple, NamedTuple
+
 import logging
 import struct
 
@@ -155,3 +157,39 @@ def is_video_file(filename):
     if filename.lower().endswith((VIDEO_FILE_EXTENSIONS)):
         return True
     return False
+
+
+def load_krt_data(path: str,
+                  ) -> dict:
+    """
+    Load KRT file containing intrinsic and extrinsic parameters.
+
+    Args:
+        path (str): Path to KRT file.
+
+    Returns:
+        Dictionary: dict with cameras parameters in normal coordinate system.
+
+    """
+    cameras = {}
+
+    with open(path, "r") as f:
+        while True:
+            name = f.readline()
+            if name == "":
+                break
+
+            intrinsic = np.array([[float(x) for x in f.readline().split()] for i in range(3)])
+            dist = np.array([float(x) for x in f.readline().split()])
+            extrinsic = np.array([[float(x) for x in f.readline().split()] for i in range(3)])
+
+
+            f.readline()
+
+            cameras[name[:-1]] = {
+                'intrinsic': intrinsic.astype(np.float32),
+                'dist': dist.astype(np.float32),
+                'extrinsic': extrinsic.astype(np.float32),
+            }
+
+    return cameras
