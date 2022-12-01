@@ -232,7 +232,7 @@ class CameraMultiple(CameraPinhole):
         cameras_names = []
 
         for key, camera_info in cameras_info.items():
-            с2w = np.array(camera_info['extrinsic'])
+            c2w = np.array(camera_info['extrinsic'])
             c2w[2, :] *= -1
             c2w = c2w[[1, 0, 2, 3], :]
             w2c[0:3, 1] *= -1
