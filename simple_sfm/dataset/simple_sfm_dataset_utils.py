@@ -198,8 +198,8 @@ def generate_ptf_masks(
         camera_name_index = image_name + '_' + str(image_id)
 
         w, h = image.size
-        image.resize([check_and_get_new_side(segmentation_size_wh[0]),
-                      check_and_get_new_side(segmentation_size_wh[1])])
+        image = image.resize([check_and_get_new_side(segmentation_size_wh[0]),
+                              check_and_get_new_side(segmentation_size_wh[1])])
         image_tensor = transform(image).float().cuda()[None]
 
         with torch.no_grad():
@@ -208,7 +208,7 @@ def generate_ptf_masks(
             image_mask = image_mask.argmax(dim=1).unsqueeze(1)
             ## Geting only the class number 1 - humans
             image_mask = (image_mask == 1)
-            image_mask = (((torch.round(image_mask[0]).repeat(3, 1, 1))) * 255)
+            image_mask = (image_mask[0].float().repeat(3, 1, 1)) * 255
             image_mask = Image.fromarray(image_mask.permute(1, 2, 0).cpu().numpy().astype(np.uint8))
 
         image_mask_path = Path('masks', f'mask_{camera_name_index}.png')
