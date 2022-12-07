@@ -197,7 +197,7 @@ def generate_ptf_masks(
         image_id = item['id']
         camera_name_index = image_name + '_' + str(image_id)
 
-        w, h = image.size()
+        w, h = image.size
         image.resize([check_and_get_new_side(segmentation_size_wh[0]),
                       check_and_get_new_side(segmentation_size_wh[1])])
         image_tensor = transform(image).float().cuda()[None]
