@@ -10,6 +10,8 @@ import numpy as np
 from simple_sfm.cameras.camera_multiple import CameraMultiple
 from simple_sfm.models.modnet import MODNETModel
 from simple_sfm.colmap_utils import read_write_colmap_data
+from simple_sfm.utils import geometry
+
 
 def generate_modnet_masks(
         dataset_path: str,
@@ -164,3 +166,34 @@ def generate_sparse_depth_from_colmap(
 
     with open(views_data_json_path, "w") as outfile:
         json.dump(views_data_json, outfile, indent=2)
+
+
+def center_and_orient(
+        input_view_json_path: str,
+        output_view_json_path: str,
+        orient_method: str = None):
+    """
+    Scale to [-1, 1] range and rotate simple_sfm_dataset.
+    orient_method could be 'up', 'pca' and 'none'.
+
+    :param input_view_json_path:
+    :param output_view_json_path:
+    :return:
+    """
+    with open(input_view_json_path, encoding="UTF-8") as file:
+        views_data = json.load(file)
+
+    poses = []
+    for view in views_data['frames']:
+        poses.append(np.array(view["transform_matrix"]))
+
+    poses = torch.from_numpy(np.array(poses).astype(np.float32))
+    poses[:, :3, :], scene_scale_factor = geometry.auto_orient_and_center_poses(poses, method=orient_method)
+
+    for i in range(len(views_data['frames'])):
+        views_data['frames'][i]["transform_matrix"] = poses[i].numpy().tolist()
+
+    views_data['scene_scale'] = scene_scale_factor.item()
+
+    with open(output_view_json_path, "w") as outfile:
+        json.dump(views_data, outfile, indent=2)
