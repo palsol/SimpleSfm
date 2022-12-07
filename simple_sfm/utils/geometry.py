@@ -175,6 +175,7 @@ def quaternion_to_rotation_matrix(quaternion: torch.Tensor) -> torch.Tensor:
         matrix = torch.squeeze(matrix, dim=0)
     return matrix
 
+
 # ##############################################################################
 
 
@@ -426,6 +427,7 @@ def rotation_matrix_between_two_vectors(vector_a: torch.Tensor, vector_b: torch.
     rotation_matrix = torch.eye(3) + kmat + torch.sum(kmat * kmat, dim=(1, 2)) * ((1 - cos) / (sin ** 2))
     return rotation_matrix
 
+
 def qvec2rotmat(qvec):
     return np.array([
         [1 - 2 * qvec[2] ** 2 - 2 * qvec[3] ** 2,
@@ -453,17 +455,32 @@ def rotmat2qvec(R):
     return qvec
 
 
-def rotmat(a, b):
-    a, b = a / np.linalg.norm(a), b / np.linalg.norm(b)
-    v = np.cross(a, b)
-    c = np.dot(a, b)
-    # handle exception for the opposite direction input
-    if c < -1 + 1e-10:
-        return rotmat(a + np.random.uniform(-1e-2, 1e-2, 3), b)
-    s = np.linalg.norm(v)
-    kmat = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
-
-    return np.eye(3) + kmat + kmat.dot(kmat) * ((1 - c) / (s ** 2 + 1e-10))
+def rotation_matrix(a, b):
+    """Compute the rotation matrix that rotates vector a to vector b.
+    https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    Args:
+        a: The vector to rotate.
+        b: The vector to rotate to.
+    Returns:
+        The rotation matrix.
+    """
+    a = a / torch.linalg.norm(a)
+    b = b / torch.linalg.norm(b)
+    v = torch.cross(a, b)
+    c = torch.dot(a, b)
+    # If vectors are exactly opposite, we add a little noise to one of them
+    if c < -1 + 1e-8:
+        eps = (torch.rand(3) - 0.5) * 0.01
+        return rotation_matrix(a + eps, b)
+    s = torch.linalg.norm(v)
+    skew_sym_mat = torch.Tensor(
+        [
+            [0, -v[2], v[1]],
+            [v[2], 0, -v[0]],
+            [-v[1], v[0], 0],
+        ]
+    )
+    return torch.eye(3) + skew_sym_mat + skew_sym_mat @ skew_sym_mat * ((1 - c) / (s ** 2 + 1e-8))
 
 
 def closest_point_2_lines(oa, da, ob, db):
