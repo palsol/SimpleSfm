@@ -174,8 +174,8 @@ def center_and_orient(
         orient_method: str = None):
     """
     Scale to [-1, 1] range and rotate simple_sfm_dataset.
-    orient_method could be 'up', 'pca' and 'none'.
-
+    
+    :param orient_method: orient_method could be 'up', 'pca' and 'none'
     :param input_view_json_path:
     :param output_view_json_path:
     :return:
