@@ -209,3 +209,10 @@ def get_image_size_near_ref_size(image_size, ref_size, divisor=None):
         im_rh = im_rh - im_rh % divisor
 
     return [im_rh, im_rw]
+
+
+def check_and_get_new_side(side: int, divider: int = 32):
+    remainder = side % divider
+    if remainder != 0:
+        side = ((side // divider) + 1) * divider
+    return side

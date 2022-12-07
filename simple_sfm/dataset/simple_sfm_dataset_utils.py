@@ -1,3 +1,4 @@
+from typing import Tuple
 import os
 import json
 from pathlib import Path
@@ -11,6 +12,7 @@ from simple_sfm.cameras.camera_multiple import CameraMultiple
 from simple_sfm.models.modnet import MODNETModel
 from simple_sfm.colmap_utils import read_write_colmap_data
 from simple_sfm.utils import geometry
+from simple_sfm.utils.image import check_and_get_new_side
 
 
 def generate_modnet_masks(
@@ -167,6 +169,58 @@ def generate_sparse_depth_from_colmap(
     with open(views_data_json_path, "w") as outfile:
         json.dump(views_data_json, outfile, indent=2)
 
+
+def generate_ptf_masks(
+        dataset_path: str,
+        model_weigths_path: str,
+        segmentation_size_wh: Tuple[int, int] = (960, 540)
+):
+    views_data_json_path = Path(dataset_path, "views_data.json")
+    save_masks_path = Path(dataset_path, 'masks')
+    os.makedirs(save_masks_path, exist_ok=True)
+
+    with open(views_data_json_path, encoding="UTF-8") as file:
+        views_data = json.load(file)
+
+    transform = [transforms.ToTensor(),
+                 transforms.Normalize(mean=(0.485, 0.456, 0.406),
+                                      std=(0.229, 0.224, 0.225))
+                 ]
+    transform = transforms.Compose(transform)
+    model = torch.jit.load(model_weigths_path).cuda()
+
+    mask_path_dict = {}
+    for item in views_data['frames']:
+        image = Image.open(Path(dataset_path, item['file_path']))
+
+        image_name = item['file_path'].split('/')[-1]
+        image_id = item['id']
+        camera_name_index = image_name + '_' + str(image_id)
+
+        w, h = image.size()
+        image.resize([check_and_get_new_side(segmentation_size_wh[0]),
+                      check_and_get_new_side(segmentation_size_wh[1])])
+        image_tensor = transform(image).float().cuda()[None]
+
+        with torch.no_grad():
+            image_mask = model(image_tensor)
+            image_mask = torch.nn.functional.interpolate(image_mask, [h, w])
+            image_mask = image_mask.argmax(dim=1).unsqueeze(1)
+            ## Geting only the class number 1 - humans
+            image_mask = (image_mask == 1)
+            image_mask = (((torch.round(image_mask[0]).repeat(3, 1, 1))) * 255)
+            image_mask = Image.fromarray(image_mask.permute(1, 2, 0).cpu().numpy().astype(np.uint8))
+
+        image_mask_path = Path('masks', f'mask_{camera_name_index}.png')
+        image_mask.save(Path(dataset_path, image_mask_path))
+
+        mask_path_dict[image_id] = image_mask_path
+
+    for i in range(len(views_data['frames'])):
+        views_data['frames'][i]['object_of_interest_mask_path'] = str(mask_path_dict[views_data['frames'][i]['id']])
+
+    with open(views_data_json_path, "w") as outfile:
+        json.dump(views_data, outfile, indent=2)
 
 def center_and_orient(
         input_view_json_path: str,
