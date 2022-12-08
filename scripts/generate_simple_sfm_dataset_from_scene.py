@@ -26,6 +26,7 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 root.addHandler(handler)
+logger = logging.getLogger(__name__)
 
 def main():
     # TODO add mode in which render use folder with images
@@ -75,6 +76,8 @@ def main():
     frames_path = Path(capture_work_dir, 'frames')
 
     is_video = is_video_file(opts.input_path)
+    logger.info(f' Data {opts.input_path} is video')
+
     if is_video:
         raw_video_dir_path = Path(capture_work_dir, 'raw_video')
         video_name = input_data_path.split('/')[-1]
