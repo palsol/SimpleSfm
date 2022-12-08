@@ -17,6 +17,13 @@ try:
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
+try:
+    import plotly.graph_objects as go
+
+    PLOTLY_AVAILABLE = True
+except ImportError:
+    PLOTLY_AVAILABLE = False
+
 
 def multiprocessing_save_image(params):
     ndarr, file_name = params
@@ -91,10 +98,12 @@ def plot_square_grid(images, cols, rows, padding=5, first_pad=0):
     return new_im
 
 
-def image_folder_to_video(output_path: str,
-                          folder_path: str,
-                          image_name_format: str = '%06d.jpg',
-                          remove_image_folder: bool = False):
+def image_folder_to_video(
+        output_path: str,
+        folder_path: str,
+        image_name_format: str = '%06d.jpg',
+        remove_image_folder: bool = False
+):
     """
     Convert folder with images to video, folder must contain only images which will be used in generating video.
     Args:
@@ -259,11 +268,90 @@ class VideoWriterPool:
 
     def finalize(self):
         command = (
-            f'ffmpeg -hide_banner -loglevel warning -y -r 30 -i {self.tmp_dir}/%06d.jpg '
-            + f'-vframes {self.n_items} '
-            + '-vcodec libx264 -crf 18 '
-            + '-pix_fmt yuv420p '
-            + self.output_path
+                f'ffmpeg -hide_banner -loglevel warning -y -r 30 -i {self.tmp_dir}/%06d.jpg '
+                + f'-vframes {self.n_items} '
+                + '-vcodec libx264 -crf 18 '
+                + '-pix_fmt yuv420p '
+                + self.output_path
         ).split()
         subprocess.call(command)
         shutil.rmtree(self.tmp_dir)
+
+
+def ploty_plot_extrinsics(
+        fig,
+        extrinsics: torch.Tensor,
+        cams_ids: List = None,
+        axis_scale: float = 0.01,
+        line_width: int = 4,
+        marker_size: float = 1,
+        marker_color: str = 'blue',
+        opacity: float = 1
+):
+    """
+    Method for ploting camera extrinsict on 3d plotly figure.
+    :param fig:
+    :param extrinsics: tensor of shape num_cams x 4 x 4
+    :param cams_ids: list of cameras ids or names
+    :param axis_scale: plot axis scale
+    :param line_width: camera axis plot line width
+    :param marker_size: size of camera marker
+    :param marker_color: marker color
+    :param opacity: plot opacity
+    :return:
+    """
+    assert PLOTLY_AVAILABLE, 'There is no plotly lib!'
+
+    translation = extrinsics[..., :3, -1:]
+    rotation = extrinsics[..., :3, :3]
+
+    cameras_world_positions = -rotation.transpose(-1, -2) @ translation
+    cameras_world_positions = cameras_world_positions[:, :, 0]
+    cameras_R = rotation
+
+    if cams_ids is None:
+        cams_ids = list(range(cameras_R.shape[0]))
+
+    fig = fig.add_trace(go.Scatter3d(
+        x=cameras_world_positions[:, 0],
+        y=cameras_world_positions[:, 1],
+        z=cameras_world_positions[:, 2],
+        mode="markers+text",
+        marker={"size": marker_size, 'color': marker_color},
+        text=[str(el) for el in cams_ids],
+        textposition="middle left",
+        opacity=opacity
+    ))
+
+    for i in range(cameras_R.shape[0]):
+        R, T = cameras_R[i], cameras_world_positions[i]
+
+        fig.add_trace(go.Scatter3d(
+            x=[T[0], T[0] + R[0, 0] * axis_scale],
+            y=[T[1], T[1] + R[0, 1] * axis_scale],
+            z=[T[2], T[2] + R[0, 2] * axis_scale],
+            line={"color": 'red', 'width': line_width},
+            mode='lines',
+            showlegend=False,
+            opacity=opacity
+        ))
+        fig.add_trace(go.Scatter3d(
+            x=[T[0], T[0] + R[1, 0] * axis_scale],
+            y=[T[1], T[1] + R[1, 1] * axis_scale],
+            z=[T[2], T[2] + R[1, 2] * axis_scale],
+            line={"color": 'green', 'width': line_width},
+            mode='lines',
+            showlegend=False,
+            opacity=opacity
+        ))
+        fig.add_trace(go.Scatter3d(
+            x=[T[0], T[0] + R[2, 0] * axis_scale],
+            y=[T[1], T[1] + R[2, 1] * axis_scale],
+            z=[T[2], T[2] + R[2, 2] * axis_scale],
+            line={"color": 'blue', 'width': line_width},
+            mode='lines',
+            showlegend=False,
+            opacity=opacity
+        ))
+
+    return fig
