@@ -17,13 +17,16 @@ from simple_sfm.utils.image import check_and_get_new_side
 
 def generate_modnet_masks(
         dataset_path: str,
-        modnet_weigths_path: str):
+        modnet_weigths_path: str,
+        output_name: str = 'object_of_interest_mask_path',
+):
     """
     Method for generating modnet masks for simple_sfm_dataset format.
     The paths to mask are stored in 'object_of_interest_mask_path' field of every frame data.
 
     :param dataset_path: path to dataset (folder with 'views_data.json' file)
     :param modnet_weigths_path: path to MODNet weights.
+    :param output_name: name which will be used in 'views_data.json' for msaks
     :return:
     """
 
@@ -61,7 +64,7 @@ def generate_modnet_masks(
         mask_path_dict[image_id] = image_mask_path
 
     for i in range(len(views_data['frames'])):
-        views_data['frames'][i]['object_of_interest_mask_path'] = str(mask_path_dict[views_data['frames'][i]['id']])
+        views_data['frames'][i][output_name] = str(mask_path_dict[views_data['frames'][i]['id']])
 
     with open(views_data_json_path, "w") as outfile:
         json.dump(views_data, outfile, indent=2)
@@ -70,7 +73,8 @@ def generate_modnet_masks(
 def generate_sparse_depth_from_colmap(
         dataset_path: str,
         sparse_colmap_output_path: str = None,
-        scale: float = 1):
+        scale: float = 1
+):
     """
     Generate binary files with sparse depth based on the point cloud,
     which is restored during COLMAP SFM (sparse reconstruction).
@@ -173,8 +177,20 @@ def generate_sparse_depth_from_colmap(
 def generate_ptf_masks(
         dataset_path: str,
         model_weigths_path: str,
-        segmentation_size_wh: Tuple[int, int] = (960, 540)
+        segmentation_size_wh: Tuple[int, int] = (960, 540),
+        output_name: str = 'object_of_interest_mask_path',
 ):
+    """
+    Method for generating modnet masks for simple_sfm_dataset format.
+    The paths to mask are stored in 'object_of_interest_mask_path' field of every frame data.
+
+    :param dataset_path: path to dataset (folder with 'views_data.json' file)
+    :param modnet_weigths_path: path to MODNet weights.
+    :param segmentation_size_wh: image resize size before using it in model
+    :param output_name: name which will be used in 'views_data.json' for msaks
+    :return:
+    """
+
     views_data_json_path = Path(dataset_path, "views_data.json")
     save_masks_path = Path(dataset_path, 'masks')
     os.makedirs(save_masks_path, exist_ok=True)
@@ -217,15 +233,17 @@ def generate_ptf_masks(
         mask_path_dict[image_id] = image_mask_path
 
     for i in range(len(views_data['frames'])):
-        views_data['frames'][i]['object_of_interest_mask_path'] = str(mask_path_dict[views_data['frames'][i]['id']])
+        views_data['frames'][i][output_name] = str(mask_path_dict[views_data['frames'][i]['id']])
 
     with open(views_data_json_path, "w") as outfile:
         json.dump(views_data, outfile, indent=2)
 
+
 def center_and_orient(
         input_view_json_path: str,
         output_view_json_path: str,
-        orient_method: str = None):
+        orient_method: str = None
+):
     """
     Scale to [-1, 1] range and rotate simple_sfm_dataset.
 
