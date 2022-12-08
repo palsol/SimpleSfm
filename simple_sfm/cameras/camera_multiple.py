@@ -383,12 +383,12 @@ class CameraMultiple(CameraPinhole):
         self.intrinsics = cropped_intrinsic / scaling
         self.images_size = crop_size
 
-    def plotly_plot_cameras_to_plotly_fig(self):
-        return plotly_plot_cameras(self)
-
-    def plotly_plot_cameras_to_images(self,
-                                      output_path: str,
-                                      resolution: List[int, int] = None,
-                                      plotly_scale: int = 1
-                                      ):
-        plotly_plot_cameras_to_images(self, output_path=output_path, resolution=resolution, plotly_scale=plotly_scale)
+    # def plotly_plot_cameras_to_plotly_fig(self):
+    #     return plotly_plot_cameras(self)
+    #
+    # def plotly_plot_cameras_to_images(self,
+    #                                   output_path: str,
+    #                                   resolution: List[int, int] = None,
+    #                                   plotly_scale: int = 1
+    #                                   ):
+    #     plotly_plot_cameras_to_images(self, output_path=output_path, resolution=resolution, plotly_scale=plotly_scale)

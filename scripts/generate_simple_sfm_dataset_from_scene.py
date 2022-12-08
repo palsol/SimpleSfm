@@ -15,6 +15,7 @@ from simple_sfm.scene_utils import OneVideoSceneProcesser
 from simple_sfm.scene_utils.colmap_scene_converters import colmap_sparse_to_simple_sfm_json_views
 from simple_sfm.utils.io import is_video_file
 from simple_sfm.utils.video_streamer import VideoStreamer
+from simple_sfm.utils.visualise import plotly_plot_cameras_to_images
 
 
 def main():
@@ -152,4 +153,4 @@ def main():
                                                orient_method='up')
 
     result_cameras = CameraMultiple.from_simple_sfm_json(views_data_oriented_path)
-    result_cameras.plotly_plot_cameras_to_images(output_path=Path(capture_work_dir, 'cameras_plot'))
+    plotly_plot_cameras_to_images(cameras=result_cameras, output_path=Path(capture_work_dir, 'cameras_plot'))
