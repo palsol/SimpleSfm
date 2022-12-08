@@ -76,7 +76,7 @@ def main():
     frames_path = Path(capture_work_dir, 'frames')
 
     is_video = is_video_file(opts.input_path)
-    logger.info(f' Data {opts.input_path} is video')
+    print(f' Data {opts.input_path} is video')
 
     if is_video:
         raw_video_dir_path = Path(capture_work_dir, 'raw_video')
