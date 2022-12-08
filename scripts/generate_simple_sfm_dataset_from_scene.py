@@ -64,7 +64,7 @@ def main():
                         help='Batch size for super glue inference.')
 
     opts = parser.parse_args()
-    print(f' Data {opts.input_path} is video')
+
     input_data_path = opts.input_path
     output_dir_path = opts.output_dir_path
     scene_name = opts.scene_name
@@ -76,7 +76,10 @@ def main():
     frames_path = Path(capture_work_dir, 'frames')
 
     is_video = is_video_file(opts.input_path)
-    print(f' Data {opts.input_path} is video')
+    if is_video:
+        logger.info(f' Data {opts.input_path} is video.')
+    else:
+        logger.info(f' Data {opts.input_path} is not video.')
 
     if is_video:
         raw_video_dir_path = Path(capture_work_dir, 'raw_video')
@@ -166,3 +169,7 @@ def main():
 
     result_cameras = CameraMultiple.from_simple_sfm_json(views_data_oriented_path)
     plotly_plot_cameras_to_images(cameras=result_cameras, output_path=Path(capture_work_dir, 'cameras_plot'))
+
+
+if __name__ == '__main__':
+    main()
