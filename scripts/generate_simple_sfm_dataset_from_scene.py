@@ -69,7 +69,8 @@ def main():
     output_dir_path = opts.output_dir_path
     scene_name = opts.scene_name
 
-    modnet_weigths_path = Path(os.path.abspath(__file__),'../weights/modnet_photographic_portrait_matting.torchscript')
+    modnet_weigths_path = Path(os.path.abspath(__file__).parent.parent,
+                               '../weights/modnet_photographic_portrait_matting.torchscript')
     # ptf_segm_model_weigths_path = '/home/palsol/projects/SimpleSfm/notebooks/data/mma_multi_211122_l_cuda_0.torchscript.pt'
 
     capture_work_dir = Path(output_dir_path, scene_name)
@@ -107,8 +108,8 @@ def main():
         shutil.copytree(input_data_path, frames_path)
 
     matcher = Matcher(
-        super_point_extractor_weights_path=Path(os.path.abspath(__file__), '../weights/superpoint_v1.pth'),
-        super_glue_weights_path=Path(os.path.abspath(__file__), '../weights/superglue_indoor.pth'),
+        super_point_extractor_weights_path=Path(os.path.abspath(__file__).parent.parent, '/weights/superpoint_v1.pth'),
+        super_glue_weights_path=Path(os.path.abspath(__file__).parent.parent, '/weights/superglue_indoor.pth'),
         nms_radius=opts.nms_radius,
         keypoint_threshold=opts.keypoint_threshold,
         matcher_type='super_glue',
