@@ -23,3 +23,5 @@ torch
 torchvision
 torchaudio
 ffmpeg
+plotly=5.11.0
+kaleido

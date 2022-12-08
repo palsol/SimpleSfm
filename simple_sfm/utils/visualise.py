@@ -4,11 +4,13 @@ import random
 import shutil
 import subprocess
 import glob
-from typing import Callable, List
+from typing import Callable, List, Tuple
 
 import numpy as np
 from PIL import Image
 import torch
+
+from simple_sfm.cameras import CameraMultiple
 
 try:
     from matplotlib import cm
@@ -355,3 +357,95 @@ def ploty_plot_extrinsics(
         ))
 
     return fig
+
+
+def plotly_plot_cameras(
+        cameras: CameraMultiple
+):
+    assert PLOTLY_AVAILABLE, 'There is no plotly lib!'
+    extrinsics = cameras.extrinsics.cpu()
+    fig = go.Figure()
+    translation = extrinsics[..., :3, -1:]
+    rotation = extrinsics[..., :3, :3]
+
+    cameras_world_positions = -rotation.transpose(-1, -2) @ translation
+    cameras_world_positions = cameras_world_positions[:, :, 0]
+    axis_min, _ = cameras_world_positions.min(axis=0)
+    axis_max, _ = cameras_world_positions.max(axis=0)
+    axis_diff = axis_max - axis_min
+    scale = max(axis_diff).item()
+    axis_center = (axis_min + axis_max) / 2
+    print(scale)
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(nticks=4, range=[axis_center[0] - scale / 2, axis_center[0] + scale / 2], ),
+            yaxis=dict(nticks=4, range=[axis_center[1] - scale / 2, axis_center[1] + scale / 2], ),
+            zaxis=dict(nticks=4, range=[axis_center[2] - scale / 2, axis_center[2] + scale / 2], ),
+        ),
+    )
+
+    fig.update_layout(scene_aspectmode='cube')
+
+    fig.update_layout(showlegend=False)
+    fig.update_layout(
+        autosize=False,
+        margin={'l': 0, 'r': 0, 't': 0, 'b': 0},
+    )
+
+    fig = ploty_plot_extrinsics(fig,
+                                extrinsics,
+                                cams_ids=cameras.cameras_ids[:, 0],
+                                opacity=0.9,
+                                axis_scale=0.1 * scale,
+                                marker_size=10,
+                                marker_color='orange'
+                                )
+    return fig
+
+
+def plotly_plot_cameras_to_images(
+        cameras: CameraMultiple,
+        output_path: str,
+        resolution: Tuple[int, int] = [800, 600],
+        plotly_scale=1
+):
+    assert PLOTLY_AVAILABLE, 'There is no plotly lib!'
+    os.makedirs(output_path, exist_ok=True)
+    fig = plotly_plot_cameras(cameras)
+
+    ## plot xyz
+    fig.write_image(os.path.join(output_path, "cameras_plot_xyz.jpg"),
+                    width=resolution[0] / plotly_scale,
+                    height=resolution[0] / plotly_scale,
+                    scale=plotly_scale
+                    )
+    ## plot xz
+    camera = dict(
+        eye=dict(x=0., y=2.0, z=0.)
+    )
+    fig.update_layout(scene_camera=camera, title='xz')
+    fig.write_image(os.path.join(output_path, "cameras_plot_xz.jpg"),
+                    width=resolution[0] / plotly_scale,
+                    height=resolution[0] / plotly_scale,
+                    scale=plotly_scale
+                    )
+    ## plot xy
+    camera = dict(
+        eye=dict(x=0., y=0, z=2.0)
+    )
+    fig.update_layout(scene_camera=camera, title='xy')
+    fig.write_image(os.path.join(output_path, "cameras_plot_xy.jpg"),
+                    width=resolution[0] / plotly_scale,
+                    height=resolution[0] / plotly_scale,
+                    scale=plotly_scale
+                    )
+    ## plot yz
+    camera = dict(
+        eye=dict(x=2.0, y=0, z=0)
+    )
+    fig.update_layout(scene_camera=camera, title='yz')
+    fig.write_image(os.path.join(output_path, "cameras_plot_y.jpg"),
+                    width=resolution[0] / plotly_scale,
+                    height=resolution[0] / plotly_scale,
+                    scale=plotly_scale
+                    )

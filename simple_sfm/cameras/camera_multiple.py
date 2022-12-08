@@ -14,6 +14,8 @@ from .camera_pinhole import CameraPinhole
 from simple_sfm.utils.coord_conversion import coords_pixel_to_film
 from simple_sfm.utils.geometry import qvec2rotmat
 from simple_sfm.utils.io import load_krt_data
+from ..utils.visualise import ploty_plot_extrinsics, plotly_plot_cameras, plotly_plot_cameras_to_images
+
 
 class CameraMultiple(CameraPinhole):
     """
@@ -189,7 +191,8 @@ class CameraMultiple(CameraPinhole):
             intrinsic = [[camera_intrinsic_data['f_x'], 0, camera_intrinsic_data['c_x']],
                          [0, camera_intrinsic_data['f_y'], camera_intrinsic_data['c_x']],
                          [0, 0, 1]]
-            images_size = [camera_intrinsic_data['original_resolution_x'], camera_intrinsic_data['original_resolution_y']]
+            images_size = [camera_intrinsic_data['original_resolution_x'],
+                           camera_intrinsic_data['original_resolution_y']]
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
             images_sizes.append(images_size)
@@ -379,3 +382,14 @@ class CameraMultiple(CameraPinhole):
 
         self.intrinsics = cropped_intrinsic / scaling
         self.images_size = crop_size
+
+    def plotly_plot_cameras_to_plotly_fig(self):
+        return plotly_plot_cameras(self)
+
+    def plotly_plot_cameras_to_images(self,
+                                      output_path: str,
+                                      resolution=[800, 600],
+                                      plotly_scale=1
+                                      ):
+
+        plotly_plot_cameras_to_images(self, output_path=output_path, resolution=resolution, plotly_scale=plotly_scale)
