@@ -69,8 +69,8 @@ def main():
     output_dir_path = opts.output_dir_path
     scene_name = opts.scene_name
 
-    modnet_weigths_path = '../weights/modnet_photographic_portrait_matting.torchscript'
-    ptf_segm_model_weigths_path = '/home/palsol/projects/SimpleSfm/notebooks/data/mma_multi_211122_l_cuda_0.torchscript.pt'
+    modnet_weigths_path = Path(os.path.abspath(__file__),'../weights/modnet_photographic_portrait_matting.torchscript')
+    # ptf_segm_model_weigths_path = '/home/palsol/projects/SimpleSfm/notebooks/data/mma_multi_211122_l_cuda_0.torchscript.pt'
 
     capture_work_dir = Path(output_dir_path, scene_name)
     frames_path = Path(capture_work_dir, 'frames')
@@ -107,8 +107,8 @@ def main():
         shutil.copytree(input_data_path, frames_path)
 
     matcher = Matcher(
-        super_point_extractor_weights_path='../weights/superpoint_v1.pth',
-        super_glue_weights_path='../weights/superglue_indoor.pth',
+        super_point_extractor_weights_path=Path(os.path.abspath(__file__), '../weights/superpoint_v1.pth'),
+        super_glue_weights_path=Path(os.path.abspath(__file__), '../weights/superglue_indoor.pth'),
         nms_radius=opts.nms_radius,
         keypoint_threshold=opts.keypoint_threshold,
         matcher_type='super_glue',
@@ -158,7 +158,7 @@ def main():
     views_data_path = Path(capture_work_dir, 'views_data.json')
 
     """Extracts and saves people masks from all views"""
-    simple_sfm_dataset_utils.generate_ptf_masks(capture_work_dir, ptf_segm_model_weigths_path)
+    simple_sfm_dataset_utils.generate_modnet_masks(capture_work_dir, modnet_weigths_path)
     """Takes colmap sparse pointcloud and saves sparse depth for each view"""
     simple_sfm_dataset_utils.generate_sparse_depth_from_colmap(capture_work_dir)
 
