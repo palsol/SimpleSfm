@@ -1,3 +1,4 @@
+import sys
 import os
 import logging
 import argparse
@@ -17,11 +18,19 @@ from simple_sfm.utils.io import is_video_file
 from simple_sfm.utils.video_streamer import VideoStreamer
 from simple_sfm.utils.visualise import plotly_plot_cameras_to_images
 
+root = logging.getLogger()
+root.setLevel(logging.DEBUG)
+
+handler = logging.StreamHandler(sys.stdout)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+root.addHandler(handler)
 
 def main():
     # TODO add mode in which render use folder with images
 
-    logger = logging.getLogger('root')
+    # logger = logging.getLogger('root')
     parser = argparse.ArgumentParser()
     parser.add_argument('--input-path', type=str, default=None,
                         help='Path to the scene input data. It can be as a folder with images as a video file.')
