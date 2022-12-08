@@ -388,8 +388,7 @@ class CameraMultiple(CameraPinhole):
 
     def plotly_plot_cameras_to_images(self,
                                       output_path: str,
-                                      resolution=[800, 600],
-                                      plotly_scale=1
+                                      resolution: List[int, int] = None,
+                                      plotly_scale: int = 1
                                       ):
-
         plotly_plot_cameras_to_images(self, output_path=output_path, resolution=resolution, plotly_scale=plotly_scale)

@@ -406,9 +406,12 @@ def plotly_plot_cameras(
 def plotly_plot_cameras_to_images(
         cameras: CameraMultiple,
         output_path: str,
-        resolution: Tuple[int, int] = [800, 600],
+        resolution=None,
         plotly_scale=1
 ):
+    if resolution is None:
+        resolution = [800, 600]
+
     assert PLOTLY_AVAILABLE, 'There is no plotly lib!'
     os.makedirs(output_path, exist_ok=True)
     fig = plotly_plot_cameras(cameras)
