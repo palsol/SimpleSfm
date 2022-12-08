@@ -14,7 +14,6 @@ from .camera_pinhole import CameraPinhole
 from simple_sfm.utils.coord_conversion import coords_pixel_to_film
 from simple_sfm.utils.geometry import qvec2rotmat
 from simple_sfm.utils.io import load_krt_data
-from ..utils.visualise import ploty_plot_extrinsics, plotly_plot_cameras, plotly_plot_cameras_to_images
 
 
 class CameraMultiple(CameraPinhole):
