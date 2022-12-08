@@ -64,7 +64,7 @@ def main():
                         help='Batch size for super glue inference.')
 
     opts = parser.parse_args()
-
+    print(f' Data {opts.input_path} is video')
     input_data_path = opts.input_path
     output_dir_path = opts.output_dir_path
     scene_name = opts.scene_name
