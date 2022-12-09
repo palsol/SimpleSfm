@@ -1,9 +1,11 @@
 __all__ = ['CameraMultiple']
 
+import os
 import math
 import json
 from pathlib import Path
 from typing import Union, Tuple, List
+import logging
 
 import torch
 import torch.nn.functional as F
@@ -14,6 +16,8 @@ from .camera_pinhole import CameraPinhole
 from simple_sfm.utils.coord_conversion import coords_pixel_to_film
 from simple_sfm.utils.geometry import qvec2rotmat
 from simple_sfm.utils.io import load_krt_data
+
+logger = logging.getLogger(__name__)
 
 
 class CameraMultiple(CameraPinhole):
@@ -382,12 +386,45 @@ class CameraMultiple(CameraPinhole):
         self.intrinsics = cropped_intrinsic / scaling
         self.images_size = crop_size
 
-    # def plotly_plot_cameras_to_plotly_fig(self):
-    #     return plotly_plot_cameras(self)
-    #
-    # def plotly_plot_cameras_to_images(self,
-    #                                   output_path: str,
-    #                                   resolution: List[int, int] = None,
-    #                                   plotly_scale: int = 1
-    #                                   ):
-    #     plotly_plot_cameras_to_images(self, output_path=output_path, resolution=resolution, plotly_scale=plotly_scale)
+    def to_simple_sfm_json(self, output_path: str):
+        frames = []
+        scene_scale = 1
+        for camera in self:
+            c2w = np.linalg.inv(camera.extrinsics[0].numpy())
+            c2w[0:3, 2] *= -1  # flip the y and z axis
+            c2w[0:3, 1] *= 1
+            c2w = c2w[[1, 0, 2, 3], :]  # swap y and z
+            c2w[2, :] *= 1  # flip whole world upside down
+            c2w[0:3, 0] *= -1
+
+            camera_intrinsic_data = dict()
+            intrinsic = camera.intrinsics[0].numpy().tolist()
+
+            camera_intrinsic_data['original_resolution_x'] = camera.images_size[0].item()
+            camera_intrinsic_data['original_resolution_y'] = camera.images_size[1].item()
+
+            camera_intrinsic_data['f_x'] = intrinsic[0][0] / camera_intrinsic_data['original_resolution_x']
+            camera_intrinsic_data['f_y'] = intrinsic[1][1] / camera_intrinsic_data['original_resolution_y']
+            camera_intrinsic_data['c_x'] = intrinsic[0][2] / camera_intrinsic_data['original_resolution_x']
+            camera_intrinsic_data['c_y'] = intrinsic[1][2] / camera_intrinsic_data['original_resolution_y']
+
+            frame = {
+                "id": camera.cameras_ids[0][0],
+                "file_path": str(camera.cameras_names[0][0]),
+                "sharpness": 100,
+                "transform_matrix": c2w,
+                "intrinsic": camera_intrinsic_data
+            }
+            frames.append(frame)
+
+        for f in frames:
+            f["transform_matrix"] = f["transform_matrix"].tolist()
+
+        out = {
+            "frames": frames,
+            "scene_scale": scene_scale,
+        }
+
+        logger.info(f"[INFO] writing {len(frames)} frames to {output_path}")
+        with open(output_path, "w") as outfile:
+            json.dump(out, outfile, indent=2)
