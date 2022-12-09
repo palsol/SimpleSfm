@@ -34,7 +34,7 @@ class CameraMultiple(CameraPinhole):
                  images_sizes: Union[Tuple, List] = None,
                  cameras_ids: List = None,
                  cameras_names: List = None,
-                 cameras_meta: Dict[List] = None,
+                 cameras_meta: Dict[str, List] = None,
                  ):
         """
          Args:
