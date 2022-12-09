@@ -4,8 +4,9 @@ import os
 import math
 import json
 from pathlib import Path
-from typing import Union, Tuple, List
+from typing import Union, Tuple, List, Dict
 import logging
+import glob
 
 import torch
 import torch.nn.functional as F
@@ -33,6 +34,7 @@ class CameraMultiple(CameraPinhole):
                  images_sizes: Union[Tuple, List] = None,
                  cameras_ids: List = None,
                  cameras_names: List = None,
+                 cameras_meta: Dict[List] = None,
                  ):
         """
          Args:
@@ -42,6 +44,7 @@ class CameraMultiple(CameraPinhole):
                 needed for compute camera frustums.
             cameras_ids: list of size Bc with cameras ids
             cameras_ids: list of size Bc with cameras names
+            cameras_meta: dict of lists of size Bc with cameras meta information
         """
 
         assert extrinsics.shape[:-2] == intrinsics.shape[:-2], \
@@ -55,6 +58,12 @@ class CameraMultiple(CameraPinhole):
             cameras_ids=cameras_ids if cameras_ids is None else np.array(cameras_ids).reshape(-1, 1),
             cameras_names=cameras_names if cameras_names is None else np.array(cameras_names).reshape(-1, 1),
         )
+
+        if cameras_meta is not None:
+            self.cameras_meta = {}
+            for key, item in cameras_meta:
+                self.cameras_meta[key] = np.array(item)
+
         self.cameras_shape = extrinsics.shape[:-2]
         self.cameras_numel = torch.tensor(self.cameras_shape).prod().item()
         self.cameras_ndim = len(self.cameras_shape)
@@ -76,8 +85,18 @@ class CameraMultiple(CameraPinhole):
         image_sizes = None if not hasattr(self, 'images_sizes') else self._unflatten_tensor(self.images_sizes)[key]
         cameras_ids = None if not hasattr(self, 'cameras_ids') else self._unflatten_nparray(self.cameras_ids)[key]
         cameras_names = None if not hasattr(self, 'cameras_names') else self._unflatten_nparray(self.cameras_names)[key]
+        new_cameras_meta = None
+        if hasattr(self, 'cameras_meta'):
+            new_cameras_meta = {}
+            for item_key, item in self.cameras_meta:
+                new_cameras_meta[item_key] = self._unflatten_nparray(item)[key]
 
-        return CameraMultiple(selected_extrinsics, selected_intrinsics, image_sizes, cameras_ids, cameras_names)
+        return CameraMultiple(selected_extrinsics,
+                              selected_intrinsics,
+                              image_sizes,
+                              cameras_ids,
+                              cameras_names,
+                              new_cameras_meta)
 
     def _flatten_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
         assert tensor.shape[:self.cameras_ndim] == self.cameras_shape, \
@@ -107,7 +126,18 @@ class CameraMultiple(CameraPinhole):
         cameras_ids = None if not hasattr(self, 'cameras_ids') else self.cameras_ids[keys]
         cameras_names = None if not hasattr(self, 'cameras_names') else self.cameras_names[keys]
 
-        return CameraMultiple(selected_extrinsics, selected_intrinsics, image_sizes, cameras_ids, cameras_names)
+        new_cameras_meta = None
+        if hasattr(self, 'cameras_meta'):
+            new_cameras_meta = {}
+            for item_key, item in self.cameras_meta:
+                new_cameras_meta[item_key] = self._unflatten_nparray(item)[keys]
+
+        return CameraMultiple(selected_extrinsics,
+                              selected_intrinsics,
+                              image_sizes,
+                              cameras_ids,
+                              cameras_names,
+                              new_cameras_meta)
 
     def get_cams_with_cams_index(self, cams_index):
         """
@@ -215,11 +245,14 @@ class CameraMultiple(CameraPinhole):
 
         |---- KRT.txt
         |---- pose.txt
-        |---- image0.jpg
-        |---- depth0.jpg
-        |---- image1.jpg
-        |---- depth1.jpg
-
+        |---- image
+            |---- image_0.jpg
+            |---- image_1.jpg
+            ...
+        |---- segmentation
+            |---- segmentation_0.jpg
+            |---- segmentation_1.jpg
+            ...
 
         Args:
             images: colmap_utils information about every view, usually stored in images.bin/txt
@@ -236,6 +269,10 @@ class CameraMultiple(CameraPinhole):
         images_sizes = []
         cameras_ids = []
         cameras_names = []
+        cameras_meta = {}
+
+        if os.path.exists(Path(path, 'segmentation')):
+            cameras_meta['multi_label_segmentation'] = []
 
         for key, camera_info in cameras_info.items():
             w2c = np.array(camera_info['extrinsic'])
@@ -247,15 +284,27 @@ class CameraMultiple(CameraPinhole):
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
             cameras_ids.append(key)
-            cameras_names.append(f'image{key}.jpg')
+            cur_image_name = '/'.join(glob.glob(os.path.join(path, f'image/image_{key}.*'))[0].split('/')[-2:])
+            cameras_names.append(cur_image_name)
             w, h = Image.open(Path(path, cameras_names[-1])).size
             images_sizes.append([w, h])
+
+            if 'multi_label_segmentation' in cameras_meta:
+                cur_segmentation_name = \
+                    '/'.join(glob.glob(os.path.join(path, f'segmentation/segmentation_{key}.*'))[0].split('/')[-2:])
+                cameras_meta['multi_label_segmentation'].append(cur_segmentation_name)
+                seg_w, seg_h = Image.open(Path(path, cameras_meta['multi_label_segmentation'][-1])).size
+                assert (seg_w == w) and (seg_h == h), f"Wrong segmentation size {seg_w} x {seg_h} must be {w} x {h}"
+
+        if not cameras_meta:
+            cameras_meta = None
 
         return cls(extrinsics=torch.tensor(extrinsics),
                    intrinsics=torch.tensor(intrinsics),
                    images_sizes=torch.tensor(images_sizes),
                    cameras_ids=cameras_ids,
-                   cameras_names=cameras_names)
+                   cameras_names=cameras_names,
+                   cameras_meta=cameras_meta)
 
     @classmethod
     def broadcast_cameras(cls, broadcasted_camera, source_camera):
