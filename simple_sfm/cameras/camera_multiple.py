@@ -61,7 +61,7 @@ class CameraMultiple(CameraPinhole):
 
         if cameras_meta is not None:
             self.cameras_meta = {}
-            for key, item in cameras_meta:
+            for key, item in cameras_meta.items():
                 self.cameras_meta[key] = np.array(item)
 
         self.cameras_shape = extrinsics.shape[:-2]
@@ -88,7 +88,7 @@ class CameraMultiple(CameraPinhole):
         new_cameras_meta = None
         if hasattr(self, 'cameras_meta'):
             new_cameras_meta = {}
-            for item_key, item in self.cameras_meta:
+            for item_key, item in self.cameras_meta.items():
                 new_cameras_meta[item_key] = self._unflatten_nparray(item)[key]
 
         return CameraMultiple(selected_extrinsics,
@@ -129,7 +129,7 @@ class CameraMultiple(CameraPinhole):
         new_cameras_meta = None
         if hasattr(self, 'cameras_meta'):
             new_cameras_meta = {}
-            for item_key, item in self.cameras_meta:
+            for item_key, item in self.cameras_meta.items():
                 new_cameras_meta[item_key] = self._unflatten_nparray(item)[keys]
 
         return CameraMultiple(selected_extrinsics,
