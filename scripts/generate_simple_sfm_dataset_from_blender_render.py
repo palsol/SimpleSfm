@@ -52,8 +52,9 @@ def main():
     output_dir_path = Path(output_dir_path)
     scene_name = input_data_path.split('/')[0]
     scene_work_dir = Path(output_dir_path, scene_name)
+    print(scene_work_dir)
     shutil.copytree(input_data_path, scene_work_dir)
-    
+
     cameras = CameraMultiple.from_KRT_dataset(scene_work_dir)
     views_data_path = Path(scene_work_dir, 'views_data.json')
     cameras.to_simple_sfm_json(views_data_path)
