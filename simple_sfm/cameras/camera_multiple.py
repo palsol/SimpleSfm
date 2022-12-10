@@ -62,7 +62,7 @@ class CameraMultiple(CameraPinhole):
         if cameras_meta is not None:
             self.cameras_meta = {}
             for key, item in cameras_meta.items():
-                self.cameras_meta[key] = np.array(item)
+                self.cameras_meta[key] = np.array(item).reshape(-1, 1)
 
         self.cameras_shape = extrinsics.shape[:-2]
         self.cameras_numel = torch.tensor(self.cameras_shape).prod().item()
@@ -130,7 +130,7 @@ class CameraMultiple(CameraPinhole):
         if hasattr(self, 'cameras_meta'):
             new_cameras_meta = {}
             for item_key, item in self.cameras_meta.items():
-                new_cameras_meta[item_key] = self._unflatten_nparray(item)[keys]
+                new_cameras_meta[item_key] = item[keys]
 
         return CameraMultiple(selected_extrinsics,
                               selected_intrinsics,
@@ -468,7 +468,7 @@ class CameraMultiple(CameraPinhole):
             if hasattr(camera, 'cameras_meta'):
                 for key, item in camera.cameras_meta.items():
                     frame[key] = item[0][0]
-                    
+
             frames.append(frame)
 
         for f in frames:
