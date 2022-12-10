@@ -44,16 +44,16 @@ def main():
     input_data_path = opts.input_path
     output_dir_path = opts.output_dir_path
 
-    simple_sfm_path = Path(os.path.abspath(__file__)).parent.parent
+    # simple_sfm_path = Path(os.path.abspath(__file__)).parent.parent
 
     # modnet_weigths_path = Path(simple_sfm_path, 'weights/modnet_photographic_portrait_matting.torchscript')
     # ptf_segm_model_weigths_path = '/home/palsol/projects/SimpleSfm/notebooks/data/mma_multi_211122_l_cuda_0.torchscript.pt'
 
     output_dir_path = Path(output_dir_path)
-    shutil.copytree(input_data_path, Path(output_dir_path))
-    scene_name = output_dir_path.split('/')[0]
+    scene_name = input_data_path.split('/')[0]
     scene_work_dir = Path(output_dir_path, scene_name)
-
+    shutil.copytree(input_data_path, scene_work_dir)
+    
     cameras = CameraMultiple.from_KRT_dataset(scene_work_dir)
     views_data_path = Path(scene_work_dir, 'views_data.json')
     cameras.to_simple_sfm_json(views_data_path)
