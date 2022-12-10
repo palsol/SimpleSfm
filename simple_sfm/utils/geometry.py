@@ -556,7 +556,7 @@ def auto_orient_and_center_poses(poses, method: str = None, center_poses: bool =
         oriented_poses = transform @ poses
     else:
         oriented_poses = poses
-        oriented_poses[:, :3, 3] -= translation
+        oriented_poses[:, :3, 3] -= mean_translation
         oriented_poses = oriented_poses[:, :3]
 
 
