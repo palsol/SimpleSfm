@@ -1,21 +1,11 @@
-import sys
-import os
-import logging
 import argparse
-from pathlib import Path
+import logging
 import shutil
-
-import torch
-import numpy as np
+import sys
+from pathlib import Path
 
 from simple_sfm.cameras import CameraMultiple
-from simple_sfm.colmap_utils import ColmapBdManager
 from simple_sfm.dataset import simple_sfm_dataset_utils
-from simple_sfm.matchers import Matcher
-from simple_sfm.scene_utils import OneVideoSceneProcesser
-from simple_sfm.scene_utils.colmap_scene_converters import colmap_sparse_to_simple_sfm_json_views
-from simple_sfm.utils.io import is_video_file
-from simple_sfm.utils.video_streamer import VideoStreamer
 from simple_sfm.utils.visualise import plotly_plot_cameras_to_images
 
 root = logging.getLogger()

@@ -443,7 +443,7 @@ class CameraMultiple(CameraPinhole):
             c2w[0:3, 2] *= -1  # flip the y and z axis
             c2w[0:3, 1] *= 1
             c2w = c2w[[1, 0, 2, 3], :]  # swap y and z
-            c2w[2, :] *= 1  # flip whole world upside down
+            c2w[2, :] *= -1  # flip whole world upside down
             c2w[0:3, 0] *= -1
 
             camera_intrinsic_data = dict()
