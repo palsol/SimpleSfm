@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from PIL import Image
+from PIL import ImageFilter
 import torch
 from torchvision import transforms
 import numpy as np
@@ -274,6 +275,7 @@ def generate_masks_from_multi_label_segmentation(
 
         mask = Image.fromarray(((((np.array(multi_segmentation) / 255) * num_classes
                                   ).astype(np.uint8) == target_class) * 255).astype(np.uint8))
+        mask = mask.filter(ImageFilter.MedianFilter(size=3))
         image_mask_path = Path('masks', f'mask_{camera_name_index}.png')
         mask.save(Path(dataset_path, image_mask_path))
         mask_path_dict[image_id] = image_mask_path
