@@ -50,7 +50,7 @@ def main():
     # ptf_segm_model_weigths_path = '/home/palsol/projects/SimpleSfm/notebooks/data/mma_multi_211122_l_cuda_0.torchscript.pt'
 
     output_dir_path = Path(output_dir_path)
-    scene_name = input_data_path.split('/')[0]
+    scene_name = input_data_path.split('/')[-1]
     scene_work_dir = Path(output_dir_path, scene_name)
     print(scene_work_dir)
     shutil.copytree(input_data_path, scene_work_dir)
