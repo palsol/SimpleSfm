@@ -464,6 +464,11 @@ class CameraMultiple(CameraPinhole):
                 "transform_matrix": c2w,
                 "intrinsic": camera_intrinsic_data
             }
+
+            if hasattr(camera, 'cameras_meta'):
+                for key, item in camera.cameras_meta.items():
+                    frame[key] = item[0][0]
+                    
             frames.append(frame)
 
         for f in frames:
