@@ -555,8 +555,8 @@ def auto_orient_and_center_poses(poses, method: str = None, center_poses: bool =
         oriented_poses[:, :3, 3] -= translation
         oriented_poses = oriented_poses[:, :3]
 
-    scale_factor = 1.0 / torch.max(torch.abs(poses[:, :3, 3]))
+    scale_factor = 1.0 / torch.max(torch.abs(oriented_poses[:, :3, 3]))
     scene_scale_factor = scale_factor
-    poses[:, :3, 3] *= scene_scale_factor
+    oriented_poses[:, :3, 3] *= scene_scale_factor
 
     return oriented_poses, scene_scale_factor
