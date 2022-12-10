@@ -75,7 +75,7 @@ def main():
     views_data_oriented_path = Path(scene_work_dir, 'views_data_oriented.json')
     simple_sfm_dataset_utils.center_and_orient(views_data_path,
                                                views_data_oriented_path,
-                                               orient_method='up')
+                                               orient_method=None)
 
     result_cameras = CameraMultiple.from_simple_sfm_json(views_data_oriented_path)
     plotly_plot_cameras_to_images(cameras=result_cameras, output_path=Path(scene_work_dir, 'cameras_plot'))
