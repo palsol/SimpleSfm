@@ -526,10 +526,6 @@ def auto_orient_and_center_poses(poses, method: str = None, center_poses: bool =
     mean_translation = torch.mean(translation, dim=0)
     translation_diff = translation - mean_translation
 
-    scale_factor = 1.0 / torch.max(torch.abs(poses[:, :3, 3]))
-    scene_scale_factor = scale_factor
-    poses[:, :3, 3] *= scene_scale_factor
-
     if center_poses:
         translation = mean_translation
     else:
@@ -556,8 +552,11 @@ def auto_orient_and_center_poses(poses, method: str = None, center_poses: bool =
         oriented_poses = transform @ poses
     else:
         oriented_poses = poses
-        oriented_poses[:, :3, 3] -= mean_translation
+        oriented_poses[:, :3, 3] -= translation
         oriented_poses = oriented_poses[:, :3]
 
+    scale_factor = 1.0 / torch.max(torch.abs(poses[:, :3, 3]))
+    scene_scale_factor = scale_factor
+    poses[:, :3, 3] *= scene_scale_factor
 
     return oriented_poses, scene_scale_factor
