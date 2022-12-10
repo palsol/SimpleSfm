@@ -558,4 +558,5 @@ def auto_orient_and_center_poses(poses, method: str = None, center_poses: bool =
         oriented_poses = poses
         poses[:, :3, 3] -= translation
 
+    print(oriented_poses.shape)
     return oriented_poses, scene_scale_factor
