@@ -28,6 +28,7 @@ handler.setFormatter(formatter)
 root.addHandler(handler)
 logger = logging.getLogger(__name__)
 
+
 def main():
     # TODO add mode in which render use folder with images
 
@@ -49,24 +50,34 @@ def main():
     # ptf_segm_model_weigths_path = '/home/palsol/projects/SimpleSfm/notebooks/data/mma_multi_211122_l_cuda_0.torchscript.pt'
 
     output_dir_path = Path(output_dir_path)
-    shutil.copytree(input_data_path,  Path(output_dir_path))
+    shutil.copytree(input_data_path, Path(output_dir_path))
+    scene_name = output_dir_path.split('/')[0]
+    scene_work_dir = Path(output_dir_path, scene_name)
 
-    cameras = CameraMultiple.from_KRT_dataset(krt_dataset_path)
+    cameras = CameraMultiple.from_KRT_dataset(scene_work_dir)
+    views_data_path = Path(scene_work_dir, 'views_data.json')
+    cameras.to_simple_sfm_json(views_data_path)
 
-    views_data_path = Path(capture_work_dir, 'views_data.json')
+    # """Extracts and saves people masks from all views"""
+    # simple_sfm_dataset_utils.generate_modnet_masks(capture_work_dir, modnet_weigths_path)
+    # """Takes colmap sparse pointcloud and saves sparse depth for each view"""
+    # simple_sfm_dataset_utils.generate_sparse_depth_from_colmap(capture_work_dir)
 
-    """Extracts and saves people masks from all views"""
-    simple_sfm_dataset_utils.generate_modnet_masks(capture_work_dir, modnet_weigths_path)
-    """Takes colmap sparse pointcloud and saves sparse depth for each view"""
-    simple_sfm_dataset_utils.generate_sparse_depth_from_colmap(capture_work_dir)
+    simple_sfm_dataset_utils.generate_masks_from_multi_label_segmentation(
+        scene_work_dir,
+        num_classes=5,
+        target_class=2,
+        output_name='object_of_interest_mask_path',
+        input_segmentation_name='multi_label_segmentation',
+    )
 
-    views_data_oriented_path = Path(capture_work_dir, 'views_data_oriented.json')
+    views_data_oriented_path = Path(scene_work_dir, 'views_data_oriented.json')
     simple_sfm_dataset_utils.center_and_orient(views_data_path,
                                                views_data_oriented_path,
                                                orient_method='up')
 
     result_cameras = CameraMultiple.from_simple_sfm_json(views_data_oriented_path)
-    plotly_plot_cameras_to_images(cameras=result_cameras, output_path=Path(capture_work_dir, 'cameras_plot'))
+    plotly_plot_cameras_to_images(cameras=result_cameras, output_path=Path(scene_work_dir, 'cameras_plot'))
 
 
 if __name__ == '__main__':

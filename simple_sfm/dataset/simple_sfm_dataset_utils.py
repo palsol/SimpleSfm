@@ -239,6 +239,51 @@ def generate_ptf_masks(
         json.dump(views_data, outfile, indent=2)
 
 
+def generate_masks_from_multi_label_segmentation(
+        dataset_path: str,
+        num_classes: int,
+        target_class: int,
+        output_name: str = 'object_of_interest_mask_path',
+        input_segmentation_name: str = 'multi_label_segmentation',
+):
+    """
+    Method for generating modnet masks for simple_sfm_dataset format.
+    The paths to mask are stored in 'object_of_interest_mask_path' field of every frame data.
+
+    :param dataset_path: path to dataset (folder with 'views_data.json' file)
+    :param num_classes: num classes in segmentation.
+    :param target_class: target class for mask
+    :param output_name: name which will be used in 'views_data.json' for masks
+    :param input_segmentation_name: name which is used in 'views_data.json' for multi label segmentation
+    :return:
+    """
+
+    views_data_json_path = Path(dataset_path, "views_data.json")
+    save_masks_path = Path(dataset_path, 'masks')
+    os.makedirs(save_masks_path, exist_ok=True)
+
+    with open(views_data_json_path, encoding="UTF-8") as file:
+        views_data = json.load(file)
+
+    mask_path_dict = {}
+    for item in views_data['frames']:
+        multi_segmentation = Image.open(Path(dataset_path, item[input_segmentation_name]))
+        image_name = item['file_path'].split('/')[-1]
+        image_id = item['id']
+        camera_name_index = image_name + '_' + str(image_id)
+
+        mask = Image.fromarray(((((np.array(multi_segmentation) / 255) * num_classes
+                                  ).astype(np.uint8) == target_class) * 255).astype(np.uint8))
+        image_mask_path = Path('masks', f'mask_{camera_name_index}.png')
+        mask.save(Path(dataset_path, image_mask_path))
+        mask_path_dict[image_id] = image_mask_path
+
+    for i in range(len(views_data['frames'])):
+        views_data['frames'][i][output_name] = str(mask_path_dict[views_data['frames'][i]['id']])
+
+    with open(views_data_json_path, "w") as outfile:
+        json.dump(views_data, outfile, indent=2)
+
 def center_and_orient(
         input_view_json_path: str,
         output_view_json_path: str,
