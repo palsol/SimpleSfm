@@ -65,9 +65,10 @@ def main():
         cameras = cameras.get_cams_with_cams_index(list(set(cameras.cameras_ids[:, 0]) - set(test_ids[:, 0])))
 
     for key, item in sub_scenes_config.items():
-        sampler_func = getattr(camera_samplers, item['sample_method'])
-        scene_cameras, _ = sampler_func(cameras, item['num_cams'])
-        scenes_cameras_list[f'{dataset_config_name}_{key}'] = scene_cameras
+        if item['num_cams'] < len(cameras):
+            sampler_func = getattr(camera_samplers, item['sample_method'])
+            scene_cameras, _ = sampler_func(cameras, item['num_cams'])
+            scenes_cameras_list[f'{dataset_config_name}_{key}'] = scene_cameras
 
     for key, scene_cameras in scenes_cameras_list.items():
         if generate_vis:
