@@ -560,3 +560,22 @@ def auto_orient_and_center_poses(poses, method: str = None, center_poses: bool =
     oriented_poses[:, :3, 3] *= scene_scale_factor
 
     return oriented_poses, scene_scale_factor
+
+
+def find_most_distant_point_a_to_b(set_a, set_b):
+    size_a = set_a.shape[0]
+    size_b = set_b.shape[0]
+    distances = torch.sqrt(torch.sum((set_b.repeat(size_a, 1) - set_a.repeat(1, size_b).reshape(-1, 3)) ** 2, dim=1))
+    min_dist, _ = distances.reshape(size_a, -1).min(dim=1)
+    return torch.argmax(min_dist)
+
+
+def find_most_distant_point(point_set):
+    size_point_set = point_set.shape[0]
+    distances = torch.sqrt(
+        torch.sum((point_set.repeat(size_point_set, 1) - point_set.repeat(1, size_point_set).reshape(-1, 3)) ** 2,
+                  dim=1))
+    mask = (distances == 0)
+    distances = distances + mask * max(distances)
+    min_dist, _ = distances.reshape(size_point_set, -1).min(dim=1)
+    return torch.argmax(min_dist)
