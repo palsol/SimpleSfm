@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--input-path', type=str, default=None,
+    parser.add_argument('--input-path', type=str,
                         help='Path to json file of simple sfm dataset.')
     parser.add_argument('--config-path', type=str, default=None,
                         help='Path to yaml file with sub scenes configurations')
@@ -59,13 +59,13 @@ def main():
     scenes_cameras_list = {}
     if 'test' in sub_scenes_config:
         test_scene_config = sub_scenes_config.pop('test')
-        sampler_func = getattr(camera_samplers, test_scene_config['sampler_type'])
+        sampler_func = getattr(camera_samplers, test_scene_config['sample_method'])
         test_cameras, test_ids = sampler_func(cameras, test_scene_config['num_cams'])
         scenes_cameras_list[f'{dataset_config_name}_test'] = test_cameras
         cameras = cameras.get_cams_with_cams_index(list(set(cameras.cameras_ids[:, 0]) - set(test_ids[:, 0])))
 
     for key, item in sub_scenes_config.items():
-        sampler_func = getattr(camera_samplers, item['sampler_type'])
+        sampler_func = getattr(camera_samplers, item['sample_method'])
         scene_cameras, _ = sampler_func(cameras, item['num_cams'])
         scenes_cameras_list[f'{dataset_config_name}_{key}'] = scene_cameras
 
