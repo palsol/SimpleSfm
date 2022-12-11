@@ -72,7 +72,7 @@ def main():
 
     for key, scene_cameras in scenes_cameras_list.items():
         if generate_vis:
-            scene_vis_path = Path(dataset_dir_path, 'cameras_plot', 'key')
+            scene_vis_path = Path(dataset_dir_path, 'cameras_plot', str(key))
             plotly_plot_cameras_to_images(scene_cameras, output_path=scene_vis_path)
         scene_cameras.to_simple_sfm_json(Path(dataset_dir_path, f'{key}.json'))
 
