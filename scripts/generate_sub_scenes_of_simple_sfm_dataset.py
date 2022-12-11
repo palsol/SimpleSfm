@@ -62,7 +62,7 @@ def main():
         sampler_func = getattr(camera_samplers, test_scene_config['sample_method'])
         test_cameras, test_ids = sampler_func(cameras, test_scene_config['num_cams'])
         scenes_cameras_list[f'{dataset_config_name}_test'] = test_cameras
-        cameras = cameras.get_cams_with_cams_index(list(set(cameras.cameras_ids[:, 0]) - set(test_ids[:, 0])))
+        cameras = cameras.get_cams_with_cams_index(list(set(cameras.cameras_ids) - set(test_ids)))
 
     for key, item in sub_scenes_config.items():
         if item['num_cams'] < len(cameras):

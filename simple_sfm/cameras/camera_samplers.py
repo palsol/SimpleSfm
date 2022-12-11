@@ -22,4 +22,5 @@ def most_distant(cameras, k):
         result_id = torch.cat([result_id, next_point_id[None]])
 
     cameras_ids = cameras.cameras_ids[result_id]
-    return cameras.get_cams_with_cams_index(cameras_ids[:, 0]), cameras_ids
+    print(cameras_ids)
+    return cameras.get_cams_with_cams_index(cameras_ids), cameras_ids
