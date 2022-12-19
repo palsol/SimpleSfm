@@ -65,9 +65,11 @@ class ColmapBdManager(object):
 
         os.makedirs(self.sparse_path, exist_ok=True)
         os.makedirs(self.dense_path, exist_ok=True)
-        self.width = camera_size[0]
-        self.height = camera_size[1]
-        self.camera_params = scale_camera_calibration(self.camera_type, self.camera_params, self.width, self.height)
+
+        if self.camera_params is not None:
+            self.width = camera_size[0]
+            self.height = camera_size[1]
+            self.camera_params = scale_camera_calibration(self.camera_type, self.camera_params, self.width, self.height)
 
         if ~os.path.isfile(self.db_path) and self.images_folder_path is not None:
             self.build_dummy_data_base()
@@ -77,10 +79,6 @@ class ColmapBdManager(object):
 
         self.connection = sqlite3.connect(self.db_path)
         self.cursor = self.connection.cursor()
-
-        logger.info(f'BD image width {self.width},  height {self.height}.')
-        logger.info(f'BD camera_type {camera_type}.')
-        logger.info(f'BD camera_params {self.camera_params}.')
 
     def __del__(self):
         self.close_bd()

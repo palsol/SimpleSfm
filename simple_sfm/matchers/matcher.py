@@ -3,11 +3,14 @@ __all__ = ['Matcher']
 import itertools
 import logging
 import time
+from pathlib import Path
+import json
 from typing import NamedTuple, Dict, Tuple, List, Union
 
 import numpy as np
 import torch
 from torch.utils.data import DataLoader
+from PIL import Image
 
 from simple_sfm.models.superglue import SuperGlue
 from simple_sfm.models.superpoint import SuperPoint
@@ -162,12 +165,12 @@ class Matcher(object):
         return frames, match_table, images_names
 
     def match_datasets(self,
-                      datasets: Union[ImageFoldersDataset, List[ImageFoldersDataset]],
-                      match_pairs_filter: callable = None,
-                      image_name_path_shift: int = 1) -> Tuple[List[Frame],
-                                                                    Dict[Tuple[int, int], np.array],
-                                                                    Dict[int, str],
-                                                                    List[int]]:
+                       datasets: Union[ImageFoldersDataset, List[ImageFoldersDataset]],
+                       match_pairs_filter: callable = None,
+                       image_name_path_shift: int = 1) -> Tuple[List[Frame],
+                                                                Dict[Tuple[int, int], np.array],
+                                                                Dict[int, str],
+                                                                List[int]]:
         """
         Get ImageFoldersDataset dataset or list of ImageFoldersDatasets and processed all frames from it,
         image folders type must be set as 'rgb' and 'mask'(if masks are used).
@@ -302,6 +305,85 @@ class Matcher(object):
                                           image.squeeze(1)))
 
             image_name = img_path.split('/')[-1]
+            images_bd_ids[image_name] = image_bd_index
+            images_bd_index_names[image_bd_index] = image_name
+
+            image_bd_index += 1
+            num_keypoints += len(keypoints_pos)
+
+        end = time.time()
+
+        logger.info(f'Finished \n '
+                    f'Elapsed time: {float(end - start)} \n'
+                    f'Num images: {len(processed_frames)} \n'
+                    f'Num keypoints: {num_keypoints} \n')
+
+        return self.match_frames(processed_frames, images_bd_index_names, match_pairs_filter)
+
+    def match_simple_sfm_dataset(self,
+                                 dataset_path: str,
+                                 match_pairs_filter: callable = None,
+                                 dataset_mask_name: str = None) -> Tuple[List[Frame],
+                                                                         Dict[Tuple[int, int], np.array],
+                                                                         Dict[int, str]]:
+        """
+        Get VideoStreamer and processed all frames from it,.
+        :param dataset_path: path to dataset (folder with 'views_data.json' file)
+        :param match_pairs_filter: Condition for filtering pairs, if you want all pairs set None.
+                                   For example, lambda x : np.abs(x[0] -x[1]) % 2 == 0,
+                                   filter all match pairs which have even distance between each other.
+        :param dataset_mask_name: str: mask name in frame dict.
+        :return: processed_frames - List of Frame,
+                 match_table - Dict where the key is a pair from the match_list,
+                 and the value is the points that match between images in pair.
+                 images_names - Dict where the key is a index of image and the value is the name of image.
+        """
+
+        if match_pairs_filter is None:
+            match_pairs_filter = lambda x: True
+
+        logger.info('Starts extracting descriptors.')
+        start = time.time()
+        image_bd_index = 1
+
+        images_bd_ids = {}
+        images_bd_index_names = {}
+        processed_frames = []
+
+        num_keypoints = 0
+
+        views_data_json_path = Path(dataset_path, "views_data.json")
+        with open(views_data_json_path, encoding="UTF-8") as file:
+            views_data = json.load(file)
+
+        for item in views_data['frames']:
+            image = np.array(Image.open(Path(dataset_path,
+                                             item['file_path'])).convert('L')).astype('float32') / 255
+            image_name = item['file_path'].split('/')[-1]
+
+
+            if dataset_mask_name is not None:
+                image_mask = np.array(Image.open(Path(dataset_path,
+                                                      item[dataset_mask_name])).convert('L')).astype('float32') / 255
+
+            with torch.no_grad():
+                image = torch.from_numpy(image)[None, None, :, :].cuda()
+                data = {'image': image}
+                if dataset_mask_name is not None:
+                    image_mask = torch.from_numpy(image_mask > 0)[None, None, :, :].cuda()
+                    data['mask'] = image_mask
+
+                result = self.super_point_extractor(data)
+
+            keypoints_pos = result['keypoints']
+            descriptors = result['descriptors']
+            scores = result['scores']
+
+            processed_frames.append(Frame(descriptors,
+                                          keypoints_pos,
+                                          scores,
+                                          image.squeeze(1)))
+
             images_bd_ids[image_name] = image_bd_index
             images_bd_index_names[image_bd_index] = image_name
 

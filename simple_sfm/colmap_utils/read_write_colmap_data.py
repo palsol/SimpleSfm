@@ -426,7 +426,7 @@ def read_model(path, ext=""):
         else:
             return
 
-    if ext == ".txt":
+    if ext == "txt" or ext == ".txt":
         cameras = read_cameras_text(os.path.join(path, "cameras." + ext))
         images = read_images_text(os.path.join(path, "images." + ext))
         points3D = read_points3D_text(os.path.join(path, "points3D.") + ext)
@@ -438,7 +438,7 @@ def read_model(path, ext=""):
 
 
 def write_model(cameras, images, points3D, path, ext="bin"):
-    if ext == ".txt":
+    if ext == "txt" or ext == ".txt":
         write_cameras_text(cameras, os.path.join(path, "cameras." + ext))
         write_images_text(images, os.path.join(path, "images." + ext))
         write_points3D_text(points3D, os.path.join(path, "points3D.") + ext)
