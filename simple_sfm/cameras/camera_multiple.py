@@ -15,8 +15,9 @@ from PIL import Image
 
 from .camera_pinhole import CameraPinhole
 from simple_sfm.utils.coord_conversion import coords_pixel_to_film
-from simple_sfm.utils.geometry import qvec2rotmat
+from simple_sfm.utils.geometry import qvec2rotmat, rotmat2qvec
 from simple_sfm.utils.io import load_krt_data
+from simple_sfm.colmap_utils import read_write_colmap_data
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ class CameraMultiple(CameraPinhole):
     def __init__(self,
                  extrinsics: torch.Tensor,
                  intrinsics: torch.Tensor,
+                 cameras_physical_id: List = None,
                  images_sizes: Union[Tuple, List] = None,
                  cameras_ids: List = None,
                  cameras_names: List = None,
@@ -43,12 +45,22 @@ class CameraMultiple(CameraPinhole):
             images_sizes (torch.Tensor): Bc x 2 or 1 x 2 or 2, camera image plane size in pixels,
                 needed for compute camera frustums.
             cameras_ids: list of size Bc with cameras ids
-            cameras_ids: list of size Bc with cameras names
+            cameras_names: list of size Bc with cameras names
+            cameras_physical_id: In this class, each camera has its own intrinsic data.
+                However, some cameras share the same data and represent the same physical camera.
+                It is important for camera optimization and is used in COLMAP.
+                So, these physical cameras ids are stored here.
             cameras_meta: dict of lists of size Bc with cameras meta information
         """
 
         assert extrinsics.shape[:-2] == intrinsics.shape[:-2], \
             f'{extrinsics.shape} vs {intrinsics.shape}'
+
+        self.cameras_shape = extrinsics.shape[:-2]
+
+        if cameras_physical_id is None:
+            cameras_physical_id = list(range(self.cameras_shape[0]))
+        self.cameras_physical_id = np.array(cameras_physical_id).reshape(-1, 1)
 
         super().__init__(
             extrinsics=extrinsics.contiguous().view(-1, *extrinsics.shape[-2:]),
@@ -64,7 +76,6 @@ class CameraMultiple(CameraPinhole):
             for key, item in cameras_meta.items():
                 self.cameras_meta[key] = np.array(item).reshape(-1, 1)
 
-        self.cameras_shape = extrinsics.shape[:-2]
         self.cameras_numel = torch.tensor(self.cameras_shape).prod().item()
         self.cameras_ndim = len(self.cameras_shape)
         self.images_size = images_sizes
@@ -80,8 +91,11 @@ class CameraMultiple(CameraPinhole):
         Returns:
             Selection of Camera Multiple
         """
+        if isinstance(key, int):
+            key = [key]
         selected_extrinsics = self._unflatten_tensor(self.extrinsics)[key]
         selected_intrinsics = self._unflatten_tensor(self.intrinsics)[key]
+        selected_cameras_physical_id = self._unflatten_nparray(self.cameras_physical_id)[key]
         image_sizes = None if not hasattr(self, 'images_sizes') else self._unflatten_tensor(self.images_sizes)[key]
         cameras_ids = None if not hasattr(self, 'cameras_ids') else self._unflatten_nparray(self.cameras_ids)[key]
         cameras_names = None if not hasattr(self, 'cameras_names') else self._unflatten_nparray(self.cameras_names)[key]
@@ -91,12 +105,13 @@ class CameraMultiple(CameraPinhole):
             for item_key, item in self.cameras_meta.items():
                 new_cameras_meta[item_key] = self._unflatten_nparray(item)[key]
 
-        return CameraMultiple(selected_extrinsics,
-                              selected_intrinsics,
-                              image_sizes,
-                              cameras_ids,
-                              cameras_names,
-                              new_cameras_meta)
+        return CameraMultiple(extrinsics=selected_extrinsics,
+                              intrinsics=selected_intrinsics,
+                              cameras_physical_id=selected_cameras_physical_id,
+                              images_sizes=image_sizes,
+                              cameras_ids=cameras_ids,
+                              cameras_names=cameras_names,
+                              cameras_meta=new_cameras_meta)
 
     def _flatten_tensor(self, tensor: torch.Tensor) -> torch.Tensor:
         assert tensor.shape[:self.cameras_ndim] == self.cameras_shape, \
@@ -122,6 +137,7 @@ class CameraMultiple(CameraPinhole):
     def _select_from_flat(self, keys):
         selected_extrinsics = self.extrinsics[keys]
         selected_intrinsics = self.intrinsics[keys]
+        selected_cameras_physical_id = self.cameras_physical_id[keys]
         image_sizes = None if not hasattr(self, 'images_sizes') else self.images_sizes[keys]
         cameras_ids = None if not hasattr(self, 'cameras_ids') else self.cameras_ids[keys]
         cameras_names = None if not hasattr(self, 'cameras_names') else self.cameras_names[keys]
@@ -132,12 +148,13 @@ class CameraMultiple(CameraPinhole):
             for item_key, item in self.cameras_meta.items():
                 new_cameras_meta[item_key] = item[keys]
 
-        return CameraMultiple(selected_extrinsics,
-                              selected_intrinsics,
-                              image_sizes,
-                              cameras_ids,
-                              cameras_names,
-                              new_cameras_meta)
+        return CameraMultiple(extrinsics=selected_extrinsics,
+                              intrinsics=selected_intrinsics,
+                              cameras_physical_id=selected_cameras_physical_id,
+                              images_sizes=image_sizes,
+                              cameras_ids=cameras_ids,
+                              cameras_names=cameras_names,
+                              cameras_meta=new_cameras_meta)
 
     def get_cams_with_cams_index(self, cams_index):
         """
@@ -170,21 +187,23 @@ class CameraMultiple(CameraPinhole):
         cameras_ids = []
         cameras_names = []
         for item in images.items():
-            camera = cameras[item[1].camera_id]
+            camera_physical_id = item[1].camera_id
+            camera = cameras[camera_physical_id]
             rotation = qvec2rotmat(item[1].qvec)
             extrinsic = np.append(rotation, item[1].tvec[..., np.newaxis], axis=1)
             intrinsic = [[camera.params[0] / camera.width, 0, camera.params[1] / camera.width],
                          [0, camera.params[0] / camera.height, camera.params[2] / camera.height],
                          [0, 0, 1]]
-            images_size = [camera.width, camera.height]
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
-            images_sizes.append(images_size)
-            cameras_ids.append(item[1].id)
+            cameras_physical_id.append(camera_physical_id)
+            images_sizes.append([camera.width, camera.height])
+            cameras_ids.append(int(item[1].id))
             cameras_names.append(item[1].name)
 
         return cls(extrinsics=torch.tensor(extrinsics),
                    intrinsics=torch.tensor(intrinsics),
+                   cameras_physical_id=cameras_physical_id,
                    images_sizes=torch.tensor(images_sizes),
                    cameras_ids=cameras_ids,
                    cameras_names=cameras_names)
@@ -210,8 +229,15 @@ class CameraMultiple(CameraPinhole):
         images_sizes = []
         cameras_ids = []
         cameras_names = []
+        cameras_physical_id = []
 
-        for view in views:
+        meta_fields_names = list(views[0].keys() - ['id', 'file_path', 'sharpness',
+                                                    'transform_matrix', 'intrinsic', 'physical_camera_id'])
+        meta_info = {}
+        for meta_field_name in meta_fields_names:
+            meta_info[meta_field_name] = []
+
+        for i, view in enumerate(views):
             camera_intrinsic_data = view['intrinsic']
             c2w = np.array(view['transform_matrix'])
             c2w[2, :] *= 1
@@ -229,14 +255,24 @@ class CameraMultiple(CameraPinhole):
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
             images_sizes.append(images_size)
-            cameras_ids.append(view['id'])
+            cameras_ids.append(int(view['id']))
             cameras_names.append(view['file_path'])
+
+            if 'physical_camera_id' in view:
+                cameras_physical_id.append(view['physical_camera_id'])
+            else:
+                cameras_physical_id.append(i)
+
+            for meta_field_name in meta_fields_names:
+                meta_info[meta_field_name].append(view[meta_field_name])
 
         return cls(extrinsics=torch.tensor(extrinsics),
                    intrinsics=torch.tensor(intrinsics),
+                   cameras_physical_id=cameras_physical_id,
                    images_sizes=torch.tensor(images_sizes),
                    cameras_ids=cameras_ids,
-                   cameras_names=cameras_names)
+                   cameras_names=cameras_names,
+                   cameras_meta=meta_info)
 
     @classmethod
     def from_KRT_dataset(cls, path):
@@ -269,11 +305,13 @@ class CameraMultiple(CameraPinhole):
         images_sizes = []
         cameras_ids = []
         cameras_names = []
+        cameras_physical_id = []
         cameras_meta = {}
 
         if os.path.exists(Path(path, 'segmentation')):
             cameras_meta['multi_label_segmentation'] = []
 
+        camera_physical_id = 0
         for key, camera_info in cameras_info.items():
             w2c = np.array(camera_info['extrinsic'])
             w2c[0, :] *= -1
@@ -283,11 +321,13 @@ class CameraMultiple(CameraPinhole):
             intrinsic = camera_info['intrinsic']
             extrinsics.append(extrinsic)
             intrinsics.append(intrinsic)
-            cameras_ids.append(key)
+            cameras_ids.append(int(key))
             cur_image_name = '/'.join(glob.glob(os.path.join(path, f'image/image_{key}.*'))[0].split('/')[-2:])
             cameras_names.append(cur_image_name)
             w, h = Image.open(Path(path, cameras_names[-1])).size
             images_sizes.append([w, h])
+            cameras_physical_id.append(camera_physical_id)
+            camera_physical_id += 1
 
             if 'multi_label_segmentation' in cameras_meta:
                 cur_segmentation_name = \
@@ -301,6 +341,7 @@ class CameraMultiple(CameraPinhole):
 
         return cls(extrinsics=torch.tensor(extrinsics),
                    intrinsics=torch.tensor(intrinsics),
+                   cameras_physical_id=cameras_physical_id,
                    images_sizes=torch.tensor(images_sizes),
                    cameras_ids=cameras_ids,
                    cameras_names=cameras_names,
@@ -308,6 +349,7 @@ class CameraMultiple(CameraPinhole):
 
     @classmethod
     def broadcast_cameras(cls, broadcasted_camera, source_camera):
+        ## TODO save other field during broadcasting
         camera_extrinsics_broadcasted = broadcasted_camera.get_extrinsics() \
             .expand(*source_camera.cameras_shape, -1, -1)
         camera_intrinsics_broadcasted = broadcasted_camera.get_intrinsics() \
@@ -408,33 +450,6 @@ class CameraMultiple(CameraPinhole):
 
         return ray_direction
 
-    def crop_center(self,
-                    crop_size
-                    ):
-        """
-        Central crop the  camera intrinsics
-
-        Args:
-            crop_size: [h, w]
-        """
-        height, width = self.images_size
-        scaling = torch.tensor([width, height, 1.], device=self.intrinsics.device).view(1, 3, 1)
-        absolute_intrinsics = self.intrinsics * scaling
-
-        crop_height, crop_width = crop_size
-
-        crop_x = math.floor((width - crop_width) / 2)
-        crop_y = math.floor((height - crop_height) / 2)
-
-        pixel_coords = torch.tensor([crop_x, crop_y], dtype=torch.float, device=self.intrinsics.device).view(1, 1, -1)
-        film_coords = coords_pixel_to_film(pixel_coords, absolute_intrinsics)[:, 0]
-        new_principal_point = - film_coords * torch.diagonal(absolute_intrinsics[:, :-1, :-1], dim1=1, dim2=2)
-        cropped_intrinsic = absolute_intrinsics.clone()
-        cropped_intrinsic[:, :-1, -1] = new_principal_point
-
-        self.intrinsics = cropped_intrinsic / scaling
-        self.images_size = crop_size
-
     def to_simple_sfm_json(self, output_path: str):
         frames = []
         scene_scale = 1
@@ -449,8 +464,8 @@ class CameraMultiple(CameraPinhole):
             camera_intrinsic_data = dict()
             intrinsic = camera.intrinsics[0].numpy().tolist()
 
-            camera_intrinsic_data['original_resolution_x'] = camera.images_size[0].item()
-            camera_intrinsic_data['original_resolution_y'] = camera.images_size[1].item()
+            camera_intrinsic_data['original_resolution_x'] = camera.images_size[0][0].item()
+            camera_intrinsic_data['original_resolution_y'] = camera.images_size[0][1].item()
 
             camera_intrinsic_data['f_x'] = intrinsic[0][0] / camera_intrinsic_data['original_resolution_x']
             camera_intrinsic_data['f_y'] = intrinsic[1][1] / camera_intrinsic_data['original_resolution_y']
@@ -458,7 +473,8 @@ class CameraMultiple(CameraPinhole):
             camera_intrinsic_data['c_y'] = intrinsic[1][2] / camera_intrinsic_data['original_resolution_y']
 
             frame = {
-                "id": camera.cameras_ids[0][0],
+                "id": int(camera.cameras_ids[0][0]),
+                "physical_camera_id": int(camera.cameras_physical_id[0][0]),
                 "file_path": str(camera.cameras_names[0][0]),
                 "sharpness": 100,
                 "transform_matrix": c2w,
@@ -480,5 +496,44 @@ class CameraMultiple(CameraPinhole):
         }
 
         logger.info(f"[INFO] writing {len(frames)} frames to {output_path}")
+
         with open(output_path, "w") as outfile:
             json.dump(out, outfile, indent=2)
+
+    def to_colmap_cameras(self, output_path: str, format: str = 'txt'):
+
+        colmap_images = dict()
+        physical_cameras = {}
+        for i, camera in enumerate(self):
+            qvec = rotmat2qvec(camera.extrinsics[0][:3, :3].cpu().numpy())
+            tvec = camera.extrinsics[0][:3, 3].cpu().numpy()
+            image_name = camera.cameras_names[0][0].split('/')[-1]
+            image_id = camera.cameras_ids[0][0]
+            camera_physical_id = camera.cameras_physical_id[0][0].item()
+
+            colmap_images[i] = read_write_colmap_data.Image(id=int(image_id) + 1, qvec=qvec, tvec=tvec,
+                                                            camera_id=camera_physical_id, name=image_name,
+                                                            xys=[], point3D_ids=[])
+
+            if camera_physical_id not in physical_cameras:
+                physical_cameras[camera_physical_id] = {'images_size': camera.images_sizes[0],
+                                                        'intrinsic': camera.intrinsics[0]}
+
+        points3D = dict()
+        physical_cameras_colmap = {}
+        for physical_camera_id, physical_camera in physical_cameras.items():
+            cam_params = (physical_camera['intrinsic'][:2].float() *
+                          physical_camera['images_size'][None].T.repeat(1, 3).float()).reshape(-1)
+            cam_params = cam_params[[0, 2, 5]].cpu().numpy()
+            physical_cameras_colmap[physical_camera_id] = \
+                read_write_colmap_data.Camera(id=physical_camera_id,
+                                              model="SIMPLE_PINHOLE",
+                                              width=physical_camera['images_size'][0].item(),
+                                              height=physical_camera['images_size'][1].item(),
+                                              params=cam_params)
+
+        read_write_colmap_data.write_model(cameras=physical_cameras_colmap,
+                                           images=colmap_images,
+                                           points3D=points3D,
+                                           path=output_path,
+                                           ext=format)

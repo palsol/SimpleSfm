@@ -1,3 +1,4 @@
+import os
 import argparse
 import logging
 import shutil
@@ -33,6 +34,7 @@ def main():
 
     input_data_path = opts.input_path
     output_dir_path = opts.output_dir_path
+    simple_sfm_path = Path(os.path.abspath(__file__)).parent.parent
 
     # simple_sfm_path = Path(os.path.abspath(__file__)).parent.parent
 
@@ -61,6 +63,14 @@ def main():
         output_name='object_of_interest_mask_path',
         input_segmentation_name='multi_label_segmentation',
     )
+
+    simple_sfm_dataset_utils.generate_sparse_colmap(
+        scene_work_dir,
+        super_point_extractor_weights_path=Path(simple_sfm_path, 'weights/superpoint_v1.pth'),
+        super_glue_weights_path=Path(simple_sfm_path, 'weights/superglue_outdoor.pth'),
+    )
+
+    simple_sfm_dataset_utils.generate_sparse_depth_from_colmap(scene_work_dir)
 
     views_data_oriented_path = Path(scene_work_dir, 'views_data_oriented.json')
     simple_sfm_dataset_utils.center_and_orient(views_data_path,
