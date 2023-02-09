@@ -105,7 +105,7 @@ class ColmapBdManager(object):
                    '--Mapper.max_num_models', '1',
                    '--database_path', db_path,
                    '--image_path', images_folder_path,
-                   '--export_path', sparse_path]
+                   '--output_path', sparse_path]
 
         if camera_type is not None and camera_params is not None:
             command.extend(['--Mapper.ba_refine_focal_length', '1',
